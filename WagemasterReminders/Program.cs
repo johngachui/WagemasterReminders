@@ -2,14 +2,17 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using YourProjectName;
 using YourProjectName.Services;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
 
-var isService = !(Debugger.IsAttached || args.Contains("--console"));
 var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--console").ToArray());
 
 // Add services to the container.
@@ -18,15 +21,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddLogging();
-
-// Configure the host
-builder.Host.UseWindowsService();
-
-// Use asynchronous methods
-builder.Services.Configure<IISServerOptions>(options =>
-{
-    options.AllowSynchronousIO = false;
-});
 
 var app = builder.Build();
 
@@ -53,12 +47,58 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
 });
 
-if (isService)
+// Start the API in a separate thread
+var cts = new CancellationTokenSource();
+var apiThread = new Thread(() =>
 {
-    var pathToExe = Process.GetCurrentProcess().MainModule.FileName;
-    var pathToContentRoot = Path.GetDirectoryName(pathToExe);
-    Directory.SetCurrentDirectory(pathToContentRoot);
-}
+    try
+    {
+        app.RunAsync(cts.Token);
+    }
+    catch (OperationCanceledException)
+    {
+        // Ignore the exception
+    }
+});
+apiThread.Start();
 
-app.Run();
+// Create the notify icon and add a context menu with a quit option
+var notifyIcon = new NotifyIcon
+{
+    Icon = new Icon(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "icon.ico")),
+    //Icon = SystemIcons.Application,
+    Visible = true,
+    Text = "WagemasterReminders API"
+};
+var contextMenuStrip = new ContextMenuStrip();
+var quitToolStripMenuItem = new ToolStripMenuItem("Quit");
+quitToolStripMenuItem.Click += (sender, args) =>
+{
+    notifyIcon.Visible = false;
+    cts.Cancel();
+    apiThread.Join();
+    Application.Exit();
+};
+contextMenuStrip.Items.Add(quitToolStripMenuItem);
+notifyIcon.ContextMenuStrip = contextMenuStrip;
 
+// Attach a MouseClick event handler to the notify icon
+notifyIcon.MouseClick += (sender, args) =>
+{
+    if (args.Button == MouseButtons.Right)
+    {
+        // Show the context menu at the current mouse position
+        contextMenuStrip.Show(Cursor.Position);
+    }
+};
+
+// Attach a FormClosing event handler to dispose of the notify icon
+Application.ApplicationExit += (sender, args) =>
+{
+    notifyIcon.Visible = false;
+    notifyIcon.Dispose();
+};
+
+Application.Run();
+// Wait for the API thread to finish
+apiThread.Join();
