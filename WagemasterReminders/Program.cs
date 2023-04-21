@@ -38,7 +38,7 @@ else
 // Use the registered services to configure the app.
 var serviceProvider = app.Services;
 var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Starting WagemasterReminders API...");
+logger.LogInformation("Starting Wagemaster API...");
 
 app.UseRouting();
 app.UseAuthorization();
@@ -65,10 +65,10 @@ apiThread.Start();
 // Create the notify icon and add a context menu with a quit option
 var notifyIcon = new NotifyIcon
 {
-    Icon = new Icon(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "icon.ico")),
+    Icon = new Icon(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "WagemasterAPI.ico")),
     //Icon = SystemIcons.Application,
     Visible = true,
-    Text = "WagemasterReminders API"
+    Text = "Wagemaster API"
 };
 var contextMenuStrip = new ContextMenuStrip();
 var quitToolStripMenuItem = new ToolStripMenuItem("Quit");

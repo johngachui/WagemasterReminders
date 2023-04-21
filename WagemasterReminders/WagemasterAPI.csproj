@@ -10,12 +10,12 @@
     <OutputType>WinExe</OutputType>
     <UseWindowsForms>True</UseWindowsForms>
     <StartupObject></StartupObject>
-    <ApplicationIcon>reminders.ico</ApplicationIcon>
+    <ApplicationIcon>WagemasterAPI.ico</ApplicationIcon>
 	  
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="reminders.ico" />
+    <Content Include="WagemasterAPI.ico" />
   </ItemGroup>
 
   <ItemGroup>
