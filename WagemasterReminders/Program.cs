@@ -13,6 +13,22 @@ using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 
+//Stop multiple loads
+
+using System.Threading;
+
+bool createdNew;
+var mutex = new Mutex(true, "Wagemaster API", out createdNew);
+
+if (!createdNew)
+{
+    // If the mutex already exists, another instance of the application is running
+    MessageBox.Show("Another instance of Wagemaster API is already running.");
+    return;
+}
+
+// Rest of the application code goes here
+
 var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--console").ToArray());
 
 // Add services to the container.
