@@ -81,7 +81,7 @@ namespace YourProjectName.Services
                 {
                     connection.Open();
 
-                    string query = "SELECT REF_NUM, REF_NAME, REMINDER_TYPE, REMINDER_MSG, REF_DATE, REMINDER_DATE FROM API_REMINDERS";
+                    string query = "SELECT REF_NUM, REF_NAME, REMINDER_TYPE, REMINDER_MSG, REF_DATE, REMINDER_DATE, COMPANY FROM API_REMINDERS";
                     using (OleDbCommand command = new OleDbCommand(query, connection))
                     {
                         using (OleDbDataReader reader = command.ExecuteReader())
@@ -96,6 +96,7 @@ namespace YourProjectName.Services
                                     ReminderMsg = reader["REMINDER_MSG"].ToString(),
                                     RefDate = DateTime.Parse(reader["REF_DATE"].ToString()),
                                     ReminderDate = DateTime.Parse(reader["REMINDER_DATE"].ToString()),
+                                    Company = reader["COMPANY"].ToString(),
                                     DatabasePath = databasePath
                                 };
                                 events.Add(e);

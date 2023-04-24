@@ -9,5 +9,6 @@
         public DateTime? RefDate { get; set; }
         public DateTime? ReminderDate { get; set; }
         public string? DatabasePath { get; set; }
+        public string? Company { get; set; }
     }
 }
