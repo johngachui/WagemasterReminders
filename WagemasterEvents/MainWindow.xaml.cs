@@ -10,6 +10,9 @@ using ToastNotifications.Lifetime;
 using ToastNotifications.Position;
 using ToastNotifications.Messages;
 using System.Windows.Input;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media.Imaging;
+using System.ComponentModel;
 
 namespace WagemasterEvents
 {
@@ -19,10 +22,28 @@ namespace WagemasterEvents
         private ObservableCollection<Event> events;
         private Notifier notifier;
         private System.Timers.Timer apiFetchTimer;
+        private System.Windows.Forms.NotifyIcon notifyIcon;
 
         public MainWindow()
         {
             InitializeComponent();
+            notifyIcon = new System.Windows.Forms.NotifyIcon
+            {
+                Icon = new System.Drawing.Icon(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/icon.ico")).Stream),
+                Visible = true
+            };
+
+            notifyIcon.MouseDoubleClick += (s, e) =>
+            {
+                if (WindowState == WindowState.Minimized)
+                {
+                    WindowState = WindowState.Normal;
+                }
+
+                Activate();
+                Topmost = true;
+                Topmost = false;
+            };
             DataContext = this;
             ShowWindowCommand = new RelayCommand(ShowWindow);
             DatabaseHelper.InitializeDatabase();
@@ -86,5 +107,33 @@ namespace WagemasterEvents
             this.Show();
             this.WindowState = WindowState.Normal;
         }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            notifyIcon.Visible = false;
+            notifyIcon.Dispose();
+        }
+
+        private void ToggleDismissedButton_Click(object sender, RoutedEventArgs e)
+        {
+            showDismissed = !showDismissed;
+            events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
+            EventsDataGrid.ItemsSource = events;
+        }
+
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Save changes to the EventsList table
+            EventsRepository.SaveEvents(events);
+        }
+
+        private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            // Open the MainSettings.xaml window
+            var settingsWindow = new MainSettings();
+            settingsWindow.ShowDialog();
+        }
+
     }
 }

@@ -32,6 +32,6 @@
         <Menu x:Name="MainMenu">
             <MenuItem Header="Settings" Click="SettingsMenuItem_Click"/>
         </Menu>
-        <tb:TaskbarIcon x:Name="NotifyIcon" IconSource="icon.ico" DoubleClickCommand="{Binding ShowWindowCommand}" />
+        
     </Grid>
 </Window>
