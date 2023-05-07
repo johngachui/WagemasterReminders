@@ -11,7 +11,7 @@ namespace WagemasterEvents
 
             MainWindow = new MainWindow();
             MainWindow.Closed += MainWindow_Closed;
-            MainWindow.Hide(); // Hide the main window initially
+            //MainWindow.Hide(); // Hide the main window initially
         }
 
         private void MainWindow_Closed(object sender, System.EventArgs e)
