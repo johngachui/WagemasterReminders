@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System;
+using System.Diagnostics;
+using System.Windows;
 using WagemasterEvents.Database;
 
 namespace WagemasterEvents
@@ -21,7 +23,12 @@ namespace WagemasterEvents
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             // Save settings to the database here
-            SettingsRepository.UpdateSettings(ServerTextBox.Text, int.Parse(CacheTimeTextBox.Text));
+            var server = ServerTextBox.Text;
+            var cacheTime = int.Parse(CacheTimeTextBox.Text);
+
+            Debug.WriteLine($"Saving settings: server={server}, cacheTime={cacheTime}");
+
+            SettingsRepository.UpdateSettings(server, cacheTime);
             MessageBox.Show("Settings saved successfully.");
             Close();
         }

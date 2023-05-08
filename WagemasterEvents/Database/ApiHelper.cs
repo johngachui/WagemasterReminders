@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -17,14 +18,18 @@ namespace WagemasterEvents.Database
 
             try
             {
-                HttpResponseMessage response = await client.GetAsync($"{server}:7080/API/Events");
+                string url = $"http://{server}:7080/API/Events";
+                Debug.WriteLine($"Fetching events from {url}");
+
+                HttpResponseMessage response = await client.GetAsync($"http://{server}:7080/API/Events");
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
                 eventsList = JsonSerializer.Deserialize<List<Event>>(responseBody);
+                Debug.WriteLine($"Fetched {eventsList.Count} events from API");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching events from API: {ex.Message}");
+                Debug.WriteLine($"Error fetching events from API: {ex.Message}");
             }
 
             return eventsList;

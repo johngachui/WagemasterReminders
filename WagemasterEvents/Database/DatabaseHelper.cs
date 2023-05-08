@@ -5,7 +5,7 @@ namespace WagemasterEvents.Database
 {
     public class DatabaseHelper
     {
-        public static string ConnectionString => $"Data Source={AppDomain.CurrentDomain.BaseDirectory}WagemasterEvents.db;Version=3;";
+        public static string ConnectionString => $"Data Source={AppDomain.CurrentDomain.BaseDirectory}WagemasterEvents.db;";
 
         public static void InitializeDatabase()
         {
