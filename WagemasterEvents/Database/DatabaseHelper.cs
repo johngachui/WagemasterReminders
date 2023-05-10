@@ -1,5 +1,8 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using Dapper;
+using Microsoft.Data.Sqlite;
 using System;
+using System.Data.SQLite;
+using System.Diagnostics;
 
 namespace WagemasterEvents.Database
 {
@@ -9,37 +12,61 @@ namespace WagemasterEvents.Database
 
         public static void InitializeDatabase()
         {
-            using (var connection = new SqliteConnection(ConnectionString))
+            Debug.WriteLine($"Database file path: {ConnectionString}");
+            using (var connection = new SQLiteConnection(ConnectionString))
             {
                 connection.Open();
 
-                string eventsListTable = "CREATE TABLE IF NOT EXISTS EventsList (" +
-                    "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "Company TEXT, " +
-                    "ReminderType TEXT, " +
-                    "Reminder TEXT, " +
-                    "DueDate DATE, " +
-                    "NextReminderDate DATE, " +
-                    "Dismissed BIT, " +
-                    "Refno TEXT, " +
-                    "DatabasePath TEXT, " +
-                    "Refname TEXT);";
-
-                string settingsTable = "CREATE TABLE IF NOT EXISTS Settings (" +
-                    "Id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "Server TEXT, " +
-                    "CacheTime INTEGER);";
-
-                using (var command = new SqliteCommand(eventsListTable, connection))
+                // Check if the tables exist
+                using (var command = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type='table' AND name='EventsList'", connection))
                 {
-                    command.ExecuteNonQuery();
+                    var tableExists = command.ExecuteScalar() != null;
+
+                    if (!tableExists)
+                    {
+                        Debug.WriteLine($"Table  does not exist");
+                        // Create the EventsList table
+                        var createTableSql = "CREATE TABLE EventsList (Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER)";
+                        try
+                        {
+                            connection.Execute(createTableSql);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Error creating EventsList table: {ex.Message}");
+                        }
+
+                        //using (var createTableCommand = new SQLiteCommand(
+                        //    "CREATE TABLE EventsList (Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER)", connection))
+                        //{
+                        //    createTableCommand.ExecuteNonQuery();
+                        // }
+                    }
                 }
 
-                using (var command = new SqliteCommand(settingsTable, connection))
+                using (var command = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type='table' AND name='Settings'", connection))
                 {
-                    command.ExecuteNonQuery();
+                    var tableExists = command.ExecuteScalar() != null;
+
+                    if (!tableExists)
+                    {
+                        // Create the Settings table
+                        using (var createTableCommand = new SQLiteCommand(
+                            "CREATE TABLE Settings (Id INTEGER PRIMARY KEY AUTOINCREMENT, Server TEXT, [Cache Time] INTEGER)", connection))
+                        {
+                            createTableCommand.ExecuteNonQuery();
+
+                            // Insert default values
+                            using (var insertCommand = new SQLiteCommand(
+                                "INSERT INTO Settings (Server, [Cache Time]) VALUES ('localhost', 300)", connection))
+                            {
+                                insertCommand.ExecuteNonQuery();
+                            }
+                        }
+                    }
                 }
             }
         }
+
     }
 }

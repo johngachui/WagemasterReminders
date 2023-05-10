@@ -8,6 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="WagemasterEvents.db" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="WagemasterEvents.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.5" />
@@ -16,12 +26,6 @@
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="ToastNotifications" Version="2.5.1" />
     <PackageReference Include="ToastNotifications.Messages" Version="2.5.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="WagemasterEvents.db">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

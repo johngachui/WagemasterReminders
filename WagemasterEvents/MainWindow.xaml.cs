@@ -6,6 +6,7 @@ using System.Timers;
 using WagemasterEvents.Database;
 using WagemasterEvents.Models;
 using System.Windows.Input;
+using System.Collections.Generic;
 
 namespace WagemasterEvents
 {
@@ -54,18 +55,32 @@ namespace WagemasterEvents
             }
         }
 
-
         private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             // Fetch new events from the API
             var apiHelper = new ApiHelper();
             var server = SettingsRepository.GetSettings().Server;
             var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server);
+
+            // Save new events to the database
             EventsRepository.SaveEvents(fetchedEvents);
 
             // Refresh the events list
             LoadEvents();
+
+            // Check for new events that need to be notified
+            var now = DateTime.Now;
+            var notifiedEvents = new List<Event>();
+            foreach (var eventItem in events)
+            {
+                if (eventItem.NextReminderDate <= now && !notifiedEvents.Contains(eventItem))
+                {
+                    MessageBox.Show($"Reminder: {eventItem.Reminder}");
+                    notifiedEvents.Add(eventItem);
+                }
+            }
         }
+
 
         private void ToggleDismissedButton_Click(object sender, RoutedEventArgs e)
         {

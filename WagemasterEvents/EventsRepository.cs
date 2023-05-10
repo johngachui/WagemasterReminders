@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Linq;
 using Dapper;
 using WagemasterEvents.Models;
 
@@ -24,7 +25,7 @@ namespace WagemasterEvents.Database
             {
                 foreach (var eventItem in events)
                 {
-                    var existingEvent = connection.QuerySingleOrDefault<Event>("SELECT * FROM EventsList WHERE Refno = @Refno", new { Refno = eventItem.Refno });
+                    var existingEvent = connection.Query<Event>("SELECT * FROM EventsList WHERE Company = @Company AND ReminderType = @ReminderType AND Reminder = @Reminder AND DueDate = @DueDate AND NextReminderDate = @NextReminderDate AND Dismissed = @Dismissed AND Refno = @Refno AND DatabasePath = @DatabasePath AND Refname = @Refname", eventItem).FirstOrDefault();
 
                     if (existingEvent == null)
                     {
@@ -34,11 +35,12 @@ namespace WagemasterEvents.Database
             }
         }
 
+
         public static void UpdateEvent(Event eventItem)
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
-                connection.Execute("UPDATE EventsList SET NextReminderDate = @NextReminderDate, Dismissed = @Dismissed WHERE Refno = @Refno", eventItem);
+                connection.Execute("UPDATE EventsList SET NextReminderDate = @NextReminderDate, Dismissed = @Dismissed WHERE id = @id", eventItem);
             }
         }
     }

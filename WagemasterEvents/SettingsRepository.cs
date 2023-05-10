@@ -44,10 +44,39 @@ namespace WagemasterEvents.Database
             {
                 connection.Open();
                 Debug.WriteLine($"Connection state is {connection.State}");
-                string sql = "UPDATE Settings SET Server = @Server, [Cache Time] = @CacheTime";
-                Debug.WriteLine($"Executing SQL query: {sql}");
-                connection.Execute(sql, new { Server = server, CacheTime = cacheTime });
+                string sqlSelect = "SELECT * FROM Settings LIMIT 1";
+                Debug.WriteLine($"Executing SQL query: {sqlSelect}");
+                var existingSettings = connection.QueryFirstOrDefault<Settings>(sqlSelect);
+
+                if (existingSettings == null)
+                {
+                    string sqlInsert = "INSERT INTO Settings (Server, [Cache Time]) VALUES (@Server, @CacheTime)";
+                    Debug.WriteLine($"Executing SQL query: {sqlInsert} with values {server} and {cacheTime}");
+                    try
+                    {
+                        connection.Execute(sqlInsert, new { Server = server, CacheTime = cacheTime });
+                    }
+                    catch (SQLiteException e)
+                    {
+                        Debug.WriteLine($"SQLite Error {e.Message}");
+                    }
+                }
+                else
+                {
+                    string sqlUpdate = "UPDATE Settings SET Server = @Server, [Cache Time] = @CacheTime WHERE Id = @Id";
+                    Debug.WriteLine($"Executing SQL query: {sqlUpdate}");
+                    try
+                    {
+                        connection.Execute(sqlUpdate, new { Server = server, CacheTime = cacheTime, Id = existingSettings.Id });
+                    }
+                    catch (SQLiteException e)
+                    {
+                        Debug.WriteLine($"SQLite Error {e.Message}");
+                    }
+                }
             }
         }
+
+
     }
 }
