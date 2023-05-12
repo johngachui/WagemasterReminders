@@ -7,6 +7,7 @@ using WagemasterEvents.Database;
 using WagemasterEvents.Models;
 using System.Windows.Input;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace WagemasterEvents
 {
@@ -19,8 +20,8 @@ namespace WagemasterEvents
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = this;
-      
+            DataContext = new MainWindowViewModel();
+
             DatabaseHelper.InitializeDatabase();
             LoadEvents();
 
@@ -30,6 +31,13 @@ namespace WagemasterEvents
             apiFetchTimer.Elapsed += ApiFetchTimer_Elapsed;
             apiFetchTimer.Interval = SettingsRepository.GetSettings().CacheTime * 1000;
             apiFetchTimer.Start();
+        }
+
+        private bool eventsLoaded = false;
+        public ObservableCollection<Event> Events
+        {
+            get { return events; }
+            set { events = value; }
         }
 
         private async void LoadEvents()
@@ -42,18 +50,20 @@ namespace WagemasterEvents
             EventsRepository.SaveEvents(fetchedEvents);
 
             // Load events from the database into the grid
-            events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
-            EventsDataGrid.ItemsSource = events;
-
+            Events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
+           
             var now = DateTime.Now;
-            foreach (var eventItem in events)
+            foreach (var eventItem in Events)
             {
+                Debug.WriteLine($"Each eventItem{eventItem.NextReminderDate}");
                 if (eventItem.NextReminderDate <= now)
                 {
                     MessageBox.Show($"Reminder: {eventItem.Reminder}");
                 }
             }
         }
+
+
 
         private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -86,7 +96,7 @@ namespace WagemasterEvents
         {
             showDismissed = !showDismissed;
             events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
-            EventsDataGrid.ItemsSource = events;
+           
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
