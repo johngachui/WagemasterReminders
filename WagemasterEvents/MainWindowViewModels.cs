@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using WagemasterEvents.Models;
 
@@ -6,14 +7,25 @@ namespace WagemasterEvents
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
-        private Event _selectedEvent;
+        private ObservableCollection<Event> events;
+        private Event selectedEvent;
+
+        public ObservableCollection<Event> Events
+        {
+            get { return events; }
+            set
+            {
+                events = value;
+                OnPropertyChanged();
+            }
+        }
 
         public Event SelectedEvent
         {
-            get { return _selectedEvent; }
+            get { return selectedEvent; }
             set
             {
-                _selectedEvent = value;
+                selectedEvent = value;
                 OnPropertyChanged();
             }
         }
@@ -26,4 +38,3 @@ namespace WagemasterEvents
         }
     }
 }
-

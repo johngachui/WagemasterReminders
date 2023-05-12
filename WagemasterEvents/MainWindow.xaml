@@ -3,6 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:WagemasterEvents"
         Title="Wagemaster Events" Height="270" Width="430">
+    <Window.DataContext>
+        <local:MainWindowViewModel />
+    </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -21,7 +24,7 @@
         
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <Grid Margin="10" DataContext="{Binding SelectedEvent}">
+            <Grid Margin="10" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="270"/>

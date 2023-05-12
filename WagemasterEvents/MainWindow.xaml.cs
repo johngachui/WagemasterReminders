@@ -24,6 +24,7 @@ namespace WagemasterEvents
 
             DatabaseHelper.InitializeDatabase();
             LoadEvents();
+                  
 
             ShowWindowCommand = new RelayCommand(ShowWindow);
 
@@ -49,19 +50,28 @@ namespace WagemasterEvents
             var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server);
             EventsRepository.SaveEvents(fetchedEvents);
 
-            // Load events from the database into the grid
-            Events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
-           
-            var now = DateTime.Now;
-            foreach (var eventItem in Events)
+            // Load events from the database into the view model
+            var events = EventsRepository.GetEvents(showDismissed);
+            var viewModel = (MainWindowViewModel)DataContext;
+            viewModel.Events = new ObservableCollection<Event>(events);
+            viewModel.SelectedEvent = events.FirstOrDefault(); // Set the first event as the selected event
+            
+            Debug.WriteLine($"events count - {events.Count}");
+
+            // Check for new events that need to be notified
+            /*var now = DateTime.Now;
+            var notifiedEvents = new List<Event>();
+            foreach (var eventItem in events)
             {
-                Debug.WriteLine($"Each eventItem{eventItem.NextReminderDate}");
-                if (eventItem.NextReminderDate <= now)
+                if (eventItem.NextReminderDate <= now && !notifiedEvents.Contains(eventItem))
                 {
                     MessageBox.Show($"Reminder: {eventItem.Reminder}");
+                    notifiedEvents.Add(eventItem);
                 }
-            }
+            }*/
         }
+
+
 
 
 
