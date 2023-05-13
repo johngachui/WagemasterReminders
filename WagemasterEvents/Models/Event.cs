@@ -5,11 +5,11 @@ namespace WagemasterEvents.Models
 {
     public class Event
     {
-        [JsonPropertyName("refnum")]
-        public string Refno { get; set; }
+        [JsonPropertyName("refNum")]
+        public string ?Refno { get; set; }
 
-        [JsonPropertyName("refname")]
-        public string Refname { get; set; }
+        [JsonPropertyName("refName")]
+        public string ?Refname { get; set; }
 
         [JsonPropertyName("reminderType")]
         public string ReminderType { get; set; }
@@ -17,7 +17,7 @@ namespace WagemasterEvents.Models
         [JsonPropertyName("reminderMsg")]
         public string Reminder { get; set; }
 
-        [JsonPropertyName("refdate")]
+        [JsonPropertyName("refDate")]
         public DateTime DueDate { get; set; }
 
         [JsonPropertyName("reminderDate")]
@@ -31,5 +31,7 @@ namespace WagemasterEvents.Models
 
         public bool Dismissed { get; set; }
     }
+
+
 }
 

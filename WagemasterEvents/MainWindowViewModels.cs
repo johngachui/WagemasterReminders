@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using WagemasterEvents.Models;
@@ -29,7 +30,7 @@ namespace WagemasterEvents
                 OnPropertyChanged();
             }
         }
-
+        
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -37,4 +38,6 @@ namespace WagemasterEvents
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
+
+   
 }

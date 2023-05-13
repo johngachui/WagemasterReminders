@@ -8,6 +8,7 @@ using WagemasterEvents.Models;
 using System.Windows.Input;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Windows.Controls;
 
 namespace WagemasterEvents
 {
@@ -16,6 +17,7 @@ namespace WagemasterEvents
         private bool showDismissed = false;
         private ObservableCollection<Event> events;
         private System.Timers.Timer apiFetchTimer;
+        private Event selectedEvent;
 
         public MainWindow()
         {
@@ -51,17 +53,26 @@ namespace WagemasterEvents
             EventsRepository.SaveEvents(fetchedEvents);
 
             // Load events from the database into the view model
-            var events = EventsRepository.GetEvents(showDismissed);
+            var loadedEvents = EventsRepository.GetEvents(showDismissed);
+
+            // Update the events collection in the MainWindow class
+            events = new ObservableCollection<Event>(loadedEvents);
+
+            // Refresh the DataContext with the updated events
+            DataContext = new MainWindowViewModel { Events = events };
+
+            // Set the first event as the selected event
             var viewModel = (MainWindowViewModel)DataContext;
-            viewModel.Events = new ObservableCollection<Event>(events);
-            viewModel.SelectedEvent = events.FirstOrDefault(); // Set the first event as the selected event
-            
-            Debug.WriteLine($"events count - {events.Count}");
+            viewModel.SelectedEvent = events.FirstOrDefault();
+
+            // Hook up the selection changed event handler for the ListBox
+            var listBox = (ListBox)FindName("EventsListBox");
+            listBox.SelectionChanged += ListBox_SelectionChanged;
 
             // Check for new events that need to be notified
             /*var now = DateTime.Now;
             var notifiedEvents = new List<Event>();
-            foreach (var eventItem in events)
+            foreach (var eventItem in loadedEvents)
             {
                 if (eventItem.NextReminderDate <= now && !notifiedEvents.Contains(eventItem))
                 {
@@ -71,8 +82,11 @@ namespace WagemasterEvents
             }*/
         }
 
-
-
+        private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var viewModel = (MainWindowViewModel)DataContext;
+            viewModel.SelectedEvent = (Event)((ListBox)sender).SelectedItem;
+        }
 
 
         private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -111,9 +125,20 @@ namespace WagemasterEvents
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            // Save changes to the EventsList table
-            EventsRepository.SaveEvents(events);
+            var selectedEvent = ((MainWindowViewModel)DataContext).SelectedEvent;
+
+            if (selectedEvent != null)
+            {
+                Debug.WriteLine($"save - {selectedEvent.Reminder} {selectedEvent.DueDate} {selectedEvent.NextReminderDate}");
+                EventsRepository.UpdateEvent(selectedEvent);
+                LoadEvents(); // Refresh the events after updating
+
+                // Set the last selected event as the selected event again
+                var viewModel = (MainWindowViewModel)DataContext;
+                viewModel.SelectedEvent = selectedEvent;
+            }
         }
+
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -129,5 +154,6 @@ namespace WagemasterEvents
             this.Show();
             this.WindowState = WindowState.Normal;
         }
+
     }
 }

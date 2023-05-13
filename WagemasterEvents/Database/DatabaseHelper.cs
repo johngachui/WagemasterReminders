@@ -26,7 +26,7 @@ namespace WagemasterEvents.Database
                     {
                         Debug.WriteLine($"Table  does not exist");
                         // Create the EventsList table
-                        var createTableSql = "CREATE TABLE EventsList (Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER)";
+                        var createTableSql = "CREATE TABLE EventsList (Id INTEGER PRIMARY KEY AUTOINCREMENT, Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER)";
                         try
                         {
                             connection.Execute(createTableSql);

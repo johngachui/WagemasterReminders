@@ -19,17 +19,18 @@ namespace WagemasterEvents.Database
             }
         }
 
+        
         public static void SaveEvents(IEnumerable<Event> events)
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
                 foreach (var eventItem in events)
                 {
-                    var existingEvent = connection.Query<Event>("SELECT * FROM EventsList WHERE Company = @Company AND ReminderType = @ReminderType AND Reminder = @Reminder AND DueDate = @DueDate AND NextReminderDate = @NextReminderDate AND Dismissed = @Dismissed AND Refno = @Refno AND DatabasePath = @DatabasePath AND Refname = @Refname", eventItem).FirstOrDefault();
+                    var existingEvent = connection.Query<Event>("SELECT * FROM EventsList WHERE Company = @Company AND ReminderType = @ReminderType AND Reminder = @Reminder AND DueDate = @DueDate AND NextReminderDate = @NextReminderDate AND Refno = @RefNo AND DatabasePath = @DatabasePath AND Refname = @RefName", eventItem).FirstOrDefault();
 
                     if (existingEvent == null)
                     {
-                        connection.Execute("INSERT INTO EventsList (Company, ReminderType, Reminder, DueDate, NextReminderDate, Dismissed, Refno, DatabasePath, Refname) VALUES (@Company, @ReminderType, @Reminder, @DueDate, @NextReminderDate, @Dismissed, @Refno, @DatabasePath, @Refname)", eventItem);
+                        connection.Execute("INSERT INTO EventsList (Company, ReminderType, Reminder, DueDate, NextReminderDate, Refno, DatabasePath, Refname, Dismissed) VALUES (@Company, @ReminderType, @Reminder, @DueDate, @NextReminderDate, @RefNo, @DatabasePath, @RefName,0)", eventItem);
                     }
                 }
             }
@@ -40,7 +41,7 @@ namespace WagemasterEvents.Database
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
-                connection.Execute("UPDATE EventsList SET NextReminderDate = @NextReminderDate, Dismissed = @Dismissed WHERE id = @id", eventItem);
+                connection.Execute("UPDATE EventsList SET NextReminderDate = @NextReminderDate, Dismissed = @Dismissed WHERE Company = @company AND ReminderType = @reminderType AND Reminder = @Reminder AND DueDate = @DueDate AND NextReminderDate = @NextReminderDate AND Refno = @Refno AND DatabasePath = @databasePath AND Refname = @RefName", eventItem);
             }
         }
     }
