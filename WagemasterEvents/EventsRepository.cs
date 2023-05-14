@@ -41,7 +41,7 @@ namespace WagemasterEvents.Database
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
-                connection.Execute("UPDATE EventsList SET NextReminderDate = @NextReminderDate, Dismissed = @Dismissed WHERE Company = @company AND ReminderType = @reminderType AND Reminder = @Reminder AND DueDate = @DueDate AND NextReminderDate = @NextReminderDate AND Refno = @Refno AND DatabasePath = @databasePath AND Refname = @RefName", eventItem);
+                connection.Execute("UPDATE EventsList SET NextReminderDate = @NextReminderDate, Dismissed = @Dismissed WHERE Company = @company AND ReminderType = @reminderType AND Reminder = @Reminder AND DueDate = @DueDate AND Refno = @Refno AND DatabasePath = @databasePath AND Refname = @RefName", eventItem);
             }
         }
     }

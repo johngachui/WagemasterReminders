@@ -32,5 +32,10 @@ namespace WagemasterEvents
             MessageBox.Show("Settings saved successfully.");
             Close();
         }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
     }
 }

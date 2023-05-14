@@ -57,18 +57,34 @@ namespace WagemasterEvents
             var loadedEvents = EventsRepository.GetEvents(showDismissed);
 
             // Update the events collection in the MainWindow class
-            events = new ObservableCollection<Event>(loadedEvents);
+            //events = new ObservableCollection<Event>(loadedEvents);
 
             // Refresh the DataContext with the updated events
-            DataContext = new MainWindowViewModel { Events = events };
+            //DataContext = new MainWindowViewModel { Events = events };
+
+            // Update the events collection in the MainWindow class on the UI thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                events = new ObservableCollection<Event>(loadedEvents);
+                DataContext = new MainWindowViewModel { Events = events };
+                var viewModel = (MainWindowViewModel)DataContext;
+                viewModel.SelectedEvent = events.FirstOrDefault();
+            });
+
+            ListBox listBox = null;
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                listBox = (ListBox)FindName("EventsListBox");
+                listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
+            });
 
             // Hook up the selection changed event handler for the ListBox
-            var listBox = (ListBox)FindName("EventsListBox");
-            listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
+            //var listBox = (ListBox)FindName("EventsListBox");
+            //listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
 
             // Set the first event as the selected event
-            var viewModel = (MainWindowViewModel)DataContext;
-            viewModel.SelectedEvent = events.FirstOrDefault();
+            //var viewModel = (MainWindowViewModel)DataContext;
+            //viewModel.SelectedEvent = events.FirstOrDefault();
 
             
 
@@ -100,11 +116,13 @@ namespace WagemasterEvents
         private void ListBoxItem_LostFocus(object sender, RoutedEventArgs e)
         {
             var listBoxItem = (ListBoxItem)sender;
-            var selectedEvent = (Event)listBoxItem.DataContext;
-
-            var viewModel = (MainWindowViewModel)DataContext;
-            viewModel.SelectedEvent = selectedEvent;
+            if (listBoxItem.DataContext is Event selectedEvent)
+            {
+                var viewModel = (MainWindowViewModel)DataContext;
+                viewModel.SelectedEvent = selectedEvent;
+            }
         }
+
 
         private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -126,10 +144,13 @@ namespace WagemasterEvents
             {
                 if (eventItem.NextReminderDate <= now && !notifiedEvents.Contains(eventItem))
                 {
-                    MessageBox.Show($"Reminder: {eventItem.Reminder}");
+                    //MessageBox.Show($"Reminder: {eventItem.Reminder}");
                     notifiedEvents.Add(eventItem);
                 }
             }
+
+            MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
+
         }
 
 
