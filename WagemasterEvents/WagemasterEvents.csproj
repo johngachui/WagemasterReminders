@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <Content Include="WagemasterEvents.db">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 

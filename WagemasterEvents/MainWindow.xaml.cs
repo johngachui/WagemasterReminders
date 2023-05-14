@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
 namespace WagemasterEvents
 {
@@ -61,13 +62,15 @@ namespace WagemasterEvents
             // Refresh the DataContext with the updated events
             DataContext = new MainWindowViewModel { Events = events };
 
+            // Hook up the selection changed event handler for the ListBox
+            var listBox = (ListBox)FindName("EventsListBox");
+            listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
+
             // Set the first event as the selected event
             var viewModel = (MainWindowViewModel)DataContext;
             viewModel.SelectedEvent = events.FirstOrDefault();
 
-            // Hook up the selection changed event handler for the ListBox
-            var listBox = (ListBox)FindName("EventsListBox");
-            listBox.SelectionChanged += ListBox_SelectionChanged;
+            
 
             // Check for new events that need to be notified
             /*var now = DateTime.Now;
@@ -81,13 +84,27 @@ namespace WagemasterEvents
                 }
             }*/
         }
-
-        private void ListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ListBoxItemContainerGenerator_StatusChanged(object sender, EventArgs e)
         {
-            var viewModel = (MainWindowViewModel)DataContext;
-            viewModel.SelectedEvent = (Event)((ListBox)sender).SelectedItem;
+            var generator = (ItemContainerGenerator)sender;
+            if (generator.Status == GeneratorStatus.ContainersGenerated)
+            {
+                foreach (var item in generator.Items)
+                {
+                    var listBoxItem = (ListBoxItem)generator.ContainerFromItem(item);
+                    listBoxItem.LostFocus += ListBoxItem_LostFocus;
+                }
+            }
         }
 
+        private void ListBoxItem_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var listBoxItem = (ListBoxItem)sender;
+            var selectedEvent = (Event)listBoxItem.DataContext;
+
+            var viewModel = (MainWindowViewModel)DataContext;
+            viewModel.SelectedEvent = selectedEvent;
+        }
 
         private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -120,21 +137,22 @@ namespace WagemasterEvents
         {
             showDismissed = !showDismissed;
             events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
-           
+            LoadEvents();
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            var selectedEvent = ((MainWindowViewModel)DataContext).SelectedEvent;
+            var viewModel = (MainWindowViewModel)DataContext;
+            var selectedEvent = viewModel.SelectedEvent;
 
             if (selectedEvent != null)
             {
-                Debug.WriteLine($"save - {selectedEvent.Reminder} {selectedEvent.DueDate} {selectedEvent.NextReminderDate}");
+                Debug.WriteLine($"selectedEvent - {selectedEvent.Reminder} {selectedEvent.DueDate} {selectedEvent.NextReminderDate}");
                 EventsRepository.UpdateEvent(selectedEvent);
                 LoadEvents(); // Refresh the events after updating
 
                 // Set the last selected event as the selected event again
-                var viewModel = (MainWindowViewModel)DataContext;
+                //var viewModel = (MainWindowViewModel)DataContext;
                 viewModel.SelectedEvent = selectedEvent;
             }
         }
@@ -154,6 +172,7 @@ namespace WagemasterEvents
             this.Show();
             this.WindowState = WindowState.Normal;
         }
+
 
     }
 }

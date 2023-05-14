@@ -1,37 +1,125 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
 namespace WagemasterEvents.Models
 {
-    public class Event
+    public class Event : INotifyPropertyChanged
     {
+        private string refno;
+        private string refname;
+        private string reminderType;
+        private string reminder;
+        private DateTime dueDate;
+        private DateTime nextReminderDate;
+        private string databasePath;
+        private string company;
+        private bool dismissed;
+
         [JsonPropertyName("refNum")]
-        public string ?Refno { get; set; }
+        public string Refno
+        {
+            get { return refno; }
+            set
+            {
+                refno = value;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonPropertyName("refName")]
-        public string ?Refname { get; set; }
+        public string Refname
+        {
+            get { return refname; }
+            set
+            {
+                refname = value;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonPropertyName("reminderType")]
-        public string ReminderType { get; set; }
+        public string ReminderType
+        {
+            get { return reminderType; }
+            set
+            {
+                reminderType = value;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonPropertyName("reminderMsg")]
-        public string Reminder { get; set; }
+        public string Reminder
+        {
+            get { return reminder; }
+            set
+            {
+                reminder = value;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonPropertyName("refDate")]
-        public DateTime DueDate { get; set; }
+        public DateTime DueDate
+        {
+            get { return dueDate; }
+            set
+            {
+                dueDate = value;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonPropertyName("reminderDate")]
-        public DateTime NextReminderDate { get; set; }
+        public DateTime NextReminderDate
+        {
+            get { return nextReminderDate; }
+            set
+            {
+                nextReminderDate = value;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonPropertyName("databasePath")]
-        public string DatabasePath { get; set; }
+        public string DatabasePath
+        {
+            get { return databasePath; }
+            set
+            {
+                databasePath = value;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonPropertyName("company")]
-        public string Company { get; set; }
+        public string Company
+        {
+            get { return company; }
+            set
+            {
+                company = value;
+                OnPropertyChanged();
+            }
+        }
 
-        public bool Dismissed { get; set; }
+        public bool Dismissed
+        {
+            get { return dismissed; }
+            set
+            {
+                dismissed = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
-
-
 }
-
