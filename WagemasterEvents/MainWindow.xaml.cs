@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.ComponentModel;
 
 namespace WagemasterEvents
 {
@@ -19,10 +20,18 @@ namespace WagemasterEvents
         private ObservableCollection<Event> events;
         private System.Timers.Timer apiFetchTimer;
         private Event selectedEvent;
+        private WindowState previousWindowState;
+        private bool minimizeToTray = true;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            // Register the SizeChanged event handler
+            SizeChanged += MainWindow_SizeChanged;
+            StateChanged += MainWindow_StateChanged;
+            Closing += MainWindow_Closing;
+
             DataContext = new MainWindowViewModel();
 
             DatabaseHelper.InitializeDatabase();
@@ -37,6 +46,30 @@ namespace WagemasterEvents
 
             Loaded += MainWindow_Loaded;
         }
+
+        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                // Store the previous WindowState
+                previousWindowState = WindowState;
+            }
+        }
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                // Store the previous WindowState
+                previousWindowState = WindowState;
+            }
+            else if (previousWindowState == WindowState.Minimized && WindowState == WindowState.Normal)
+            {
+                // Maximize the MainWindow
+                WindowState = WindowState.Maximized;
+            }
+        }
+
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -103,7 +136,6 @@ namespace WagemasterEvents
         }
 
 
-        
         private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             // Fetch new events from the API
@@ -114,8 +146,8 @@ namespace WagemasterEvents
             // Save new events to the database
             EventsRepository.SaveEvents(fetchedEvents);
 
-            // Load events from the database into the view model
-            var loadedEvents = EventsRepository.GetEvents(showDismissed);
+            // Load events from the database into the view model, including the dismissed events
+            var loadedEvents = EventsRepository.GetEvents(false); // Include dismissed events
 
             // Update the events collection in the MainWindow class on the UI thread
             Application.Current.Dispatcher.Invoke(() =>
@@ -129,11 +161,27 @@ namespace WagemasterEvents
 
             // Check for new events that need to be notified
             var now = DateTime.Now;
-            var notifiedEvents = fetchedEvents.Where(eventItem => eventItem.NextReminderDate <= now).ToList();
+            var notifiedEvents = loadedEvents.Where(eventItem => eventItem.NextReminderDate <= now && !eventItem.Dismissed).ToList();
 
             if (notifiedEvents.Count > 0)
             {
-                MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
+                MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
+                Application.Current.Dispatcher.Invoke(() =>
+                { 
+                    if (WindowState == WindowState.Minimized)
+                    {
+                        // Restore the MainWindow if it was previously maximized
+                        if (previousWindowState == WindowState.Maximized)
+                        {
+                            ShowWindowCommand.Execute(null); // Invoke the ShowWindowCommand
+                        }
+                        else
+                        {
+                            ShowWindowCommand.Execute(null); // Invoke the ShowWindowCommand
+                            WindowState = WindowState.Normal; // Set the WindowState to Normal
+                        }
+                    }
+                });
             }
         }
 
@@ -155,7 +203,6 @@ namespace WagemasterEvents
                 LoadEvents(); // Refresh the events after updating
 
                 // Set the last selected event as the selected event again
-                //var viewModel = (MainWindowViewModel)DataContext;
                 viewModel.SelectedEvent = selectedEvent;
             }
         }
@@ -173,6 +220,15 @@ namespace WagemasterEvents
         {
             this.Show();
             this.WindowState = WindowState.Normal;
+        }
+
+        private void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            if (minimizeToTray)
+            {
+                e.Cancel = true; // Cancel the closing event
+                Hide(); // Hide the window instead of closing
+            }
         }
 
 
