@@ -12,7 +12,7 @@ namespace WagemasterEvents.Database
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
-                var settings = connection.QueryFirstOrDefault<Settings>("SELECT * FROM Settings LIMIT 1");
+                var settings = connection.QueryFirstOrDefault<Settings>("SELECT Server , [Cache Time] as Cachetime FROM Settings LIMIT 1");
                 if (settings == null)
                 {
                     settings = new Settings
@@ -27,11 +27,12 @@ namespace WagemasterEvents.Database
                     {
                         settings.Server = "localhost";
                     }
-
+                    
                     if (settings.CacheTime < 1)
                     {
                         settings.CacheTime = 300;
                     }
+ 
                 }
 
                 return settings;
