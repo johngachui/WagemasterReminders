@@ -33,7 +33,13 @@ namespace WagemasterEvents
 
             apiFetchTimer = new System.Timers.Timer();
             apiFetchTimer.Elapsed += ApiFetchTimer_Elapsed;
-            apiFetchTimer.Interval = SettingsRepository.GetSettings().CacheTime * 1000;
+            apiFetchTimer.Interval = SettingsRepository.GetSettings().CacheTime * 1000 * 60;
+
+            Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
             apiFetchTimer.Start();
         }
 
@@ -56,13 +62,6 @@ namespace WagemasterEvents
             // Load events from the database into the view model
             var loadedEvents = EventsRepository.GetEvents(showDismissed);
 
-            // Update the events collection in the MainWindow class
-            //events = new ObservableCollection<Event>(loadedEvents);
-
-            // Refresh the DataContext with the updated events
-            //DataContext = new MainWindowViewModel { Events = events };
-
-            // Update the events collection in the MainWindow class on the UI thread
             Application.Current.Dispatcher.Invoke(() =>
             {
                 events = new ObservableCollection<Event>(loadedEvents);
@@ -78,27 +77,7 @@ namespace WagemasterEvents
                 listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
             });
 
-            // Hook up the selection changed event handler for the ListBox
-            //var listBox = (ListBox)FindName("EventsListBox");
-            //listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
-
-            // Set the first event as the selected event
-            //var viewModel = (MainWindowViewModel)DataContext;
-            //viewModel.SelectedEvent = events.FirstOrDefault();
-
             
-
-            // Check for new events that need to be notified
-            /*var now = DateTime.Now;
-            var notifiedEvents = new List<Event>();
-            foreach (var eventItem in loadedEvents)
-            {
-                if (eventItem.NextReminderDate <= now && !notifiedEvents.Contains(eventItem))
-                {
-                    MessageBox.Show($"Reminder: {eventItem.Reminder}");
-                    notifiedEvents.Add(eventItem);
-                }
-            }*/
         }
         private void ListBoxItemContainerGenerator_StatusChanged(object sender, EventArgs e)
         {
@@ -124,6 +103,7 @@ namespace WagemasterEvents
         }
 
 
+        
         private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             // Fetch new events from the API
@@ -134,25 +114,28 @@ namespace WagemasterEvents
             // Save new events to the database
             EventsRepository.SaveEvents(fetchedEvents);
 
-            // Refresh the events list
-            LoadEvents();
+            // Load events from the database into the view model
+            var loadedEvents = EventsRepository.GetEvents(showDismissed);
+
+            // Update the events collection in the MainWindow class on the UI thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                events = new ObservableCollection<Event>(loadedEvents);
+                DataContext = new MainWindowViewModel { Events = events };
+
+                // Refresh the ListBox with the updated events
+                EventsListBox.ItemsSource = events;
+            });
 
             // Check for new events that need to be notified
             var now = DateTime.Now;
-            var notifiedEvents = new List<Event>();
-            foreach (var eventItem in events)
+            var notifiedEvents = fetchedEvents.Where(eventItem => eventItem.NextReminderDate <= now).ToList();
+
+            if (notifiedEvents.Count > 0)
             {
-                if (eventItem.NextReminderDate <= now && !notifiedEvents.Contains(eventItem))
-                {
-                    //MessageBox.Show($"Reminder: {eventItem.Reminder}");
-                    notifiedEvents.Add(eventItem);
-                }
+                MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
             }
-
-            MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
-
         }
-
 
         private void ToggleDismissedButton_Click(object sender, RoutedEventArgs e)
         {
@@ -168,7 +151,6 @@ namespace WagemasterEvents
 
             if (selectedEvent != null)
             {
-                Debug.WriteLine($"selectedEvent - {selectedEvent.Reminder} {selectedEvent.DueDate} {selectedEvent.NextReminderDate}");
                 EventsRepository.UpdateEvent(selectedEvent);
                 LoadEvents(); // Refresh the events after updating
 
@@ -177,7 +159,6 @@ namespace WagemasterEvents
                 viewModel.SelectedEvent = selectedEvent;
             }
         }
-
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
         {

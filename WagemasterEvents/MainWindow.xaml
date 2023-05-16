@@ -86,10 +86,10 @@
                             <TextBox Text="{Binding Refname}" IsReadOnly="True" Grid.Column="1" Margin="5,0,0,0" Grid.Row="3"/>
 
                             <TextBlock Text="Due Date:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="4"/>
-                            <DatePicker SelectedDate="{Binding DueDate}" IsEnabled="False" Grid.Column="1" Margin="5,0,0,0" Grid.Row="4"/>
+                            <DatePicker SelectedDate="{Binding DueDate}" IsEnabled="False" Grid.Column="1" Margin="5,0,0,0"  SelectedDateFormat="Long" Grid.Row="4"/>
 
                             <TextBlock Text="Next Reminder Date:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="5"/>
-                            <DatePicker SelectedDate="{Binding NextReminderDate}" Grid.Column="1" Margin="5,0,0,0" Grid.Row="5"/>
+                            <DatePicker SelectedDate="{Binding NextReminderDate}" Grid.Column="1" Margin="5,0,0,0"  SelectedDateFormat="Long" Grid.Row="5"/>
 
                             <TextBlock Text="Dismissed:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="6"/>
                             <CheckBox IsChecked="{Binding Dismissed}" Grid.Column="1" Margin="5,5,0,0" Grid.Row="6"/>

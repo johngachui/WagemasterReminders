@@ -37,7 +37,7 @@
             
         <Label Content="Server name :" Margin="20,20,0,0"/>
         <TextBox x:Name="ServerTextBox" Margin="95,25,0,0" Height="25" Width="170"/>
-        <Label Content="Cache Time (secs) :" Grid.Row="1" Margin="20,10,0,0"/>
+        <Label Content="Cache Time (mins) :" Grid.Row="1" Margin="20,10,0,0"/>
         <TextBox x:Name="CacheTimeTextBox" Grid.Row="1" Margin="95,15,0,0" Height="25" Width="170"/>
         <Button x:Name="SaveButton" Content="Save" Grid.Row="3" Click="SaveButton_Click" Width="70"/>
 

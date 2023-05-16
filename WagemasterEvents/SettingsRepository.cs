@@ -18,7 +18,7 @@ namespace WagemasterEvents.Database
                     settings = new Settings
                     {
                         Server = "localhost",
-                        CacheTime = 300
+                        CacheTime = 180
                     };
                 }
                 else
@@ -30,7 +30,7 @@ namespace WagemasterEvents.Database
                     
                     if (settings.CacheTime < 1)
                     {
-                        settings.CacheTime = 300;
+                        settings.CacheTime = 180;
                     }
  
                 }
