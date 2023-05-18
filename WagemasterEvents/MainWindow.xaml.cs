@@ -47,12 +47,39 @@ namespace WagemasterEvents
             Loaded += MainWindow_Loaded;
         }
 
-        private void ResetButton_Click(object sender, RoutedEventArgs e)
+        private async void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-            EventsRepository.DeleteEvents(selectedEvent);
+            var result = MessageBox.Show("Are you sure you want to reset list - all changes will be lost?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                EventsRepository.DeleteEvents(selectedEvent);
 
-            LoadEvents();
-            MessageBox.Show("Reminders list reset successfully.");
+                // Fetch new events from the API
+                var apiHelper = new ApiHelper();
+                var server = SettingsRepository.GetSettings().Server;
+                var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server);
+
+                // Save new events to the database
+                EventsRepository.SaveEvents(fetchedEvents);
+
+                // Load events from the database into the view model, including the dismissed events
+                var loadedEvents = EventsRepository.GetEvents(showDismissed); // Include dismissed events
+
+                // Update the events collection in the MainWindow class on the UI thread
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    events = new ObservableCollection<Event>(loadedEvents);
+                    DataContext = new MainWindowViewModel { Events = events };
+
+                    // Refresh the ListBox with the updated events
+                    EventsListBox.ItemsSource = events;
+                });
+
+                // Update button text
+                ToggleDismissedButton.Content = showDismissed ? "Hide Dismissed" : "Show Dismissed";
+
+                MessageBox.Show("Reminders list reset successfully.");
+            }
         }
 
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -191,7 +218,11 @@ namespace WagemasterEvents
                             WindowState = WindowState.Normal; // Set the WindowState to Normal
                         }
                     }
+
+                    // Update button text
+                    ToggleDismissedButton.Content = showDismissed ? "Hide Dismissed" : "Show Dismissed";
                 });
+                                
             }
         }
 
@@ -199,23 +230,37 @@ namespace WagemasterEvents
         {
             showDismissed = !showDismissed;
             events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
+
+            // Update button text
+            ToggleDismissedButton.Content = showDismissed ? "Hide Dismissed" : "Show Dismissed";
+
             LoadEvents();
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            var viewModel = (MainWindowViewModel)DataContext;
-            var selectedEvent = viewModel.SelectedEvent;
-
-            if (selectedEvent != null)
+            var result = MessageBox.Show("Are you sure you want to save changes?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
             {
-                EventsRepository.UpdateEvent(selectedEvent);
-                LoadEvents(); // Refresh the events after updating
+                var viewModel = (MainWindowViewModel)DataContext;
+                var selectedEvent = viewModel.SelectedEvent;
 
-                // Set the last selected event as the selected event again
-                viewModel.SelectedEvent = selectedEvent;
+                if (selectedEvent != null)
+                {
+                    EventsRepository.UpdateEvent(selectedEvent);
+                    showDismissed = !showDismissed;
+                    events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
+
+                    // Update button text
+                    ToggleDismissedButton.Content = showDismissed ? "Hide Dismissed" : "Show Dismissed";
+
+                    LoadEvents();
+                    
+                    // Set the last selected event as the selected event again
+                    viewModel.SelectedEvent = selectedEvent;
+                }
+                MessageBox.Show("Reminder saved successfully.");
             }
-            MessageBox.Show("Reminder saved successfully.");
         }
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
