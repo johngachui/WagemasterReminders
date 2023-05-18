@@ -175,7 +175,9 @@ namespace WagemasterEvents
             {
                 MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
                 Application.Current.Dispatcher.Invoke(() =>
-                { 
+                {
+                    ShowWindowCommand.Execute(null);
+
                     if (WindowState == WindowState.Minimized)
                     {
                         // Restore the MainWindow if it was previously maximized
