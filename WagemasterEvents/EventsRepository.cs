@@ -44,5 +44,13 @@ namespace WagemasterEvents.Database
                 connection.Execute("UPDATE EventsList SET NextReminderDate = @NextReminderDate, Dismissed = @Dismissed WHERE Company = @company AND ReminderType = @reminderType AND Reminder = @Reminder AND DueDate = @DueDate AND Refno = @Refno AND DatabasePath = @databasePath AND Refname = @RefName", eventItem);
             }
         }
+
+        public static void DeleteEvents(Event eventItem)
+        {
+            using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
+            {
+                connection.Execute("DELETE FROM EventsList", eventItem);
+            }
+        }
     }
 }

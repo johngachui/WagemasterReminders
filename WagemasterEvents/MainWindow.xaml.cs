@@ -47,6 +47,14 @@ namespace WagemasterEvents
             Loaded += MainWindow_Loaded;
         }
 
+        private void ResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            EventsRepository.DeleteEvents(selectedEvent);
+
+            LoadEvents();
+            MessageBox.Show("Reminders list reset successfully.");
+        }
+
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (WindowState == WindowState.Minimized)
@@ -205,6 +213,7 @@ namespace WagemasterEvents
                 // Set the last selected event as the selected event again
                 viewModel.SelectedEvent = selectedEvent;
             }
+            MessageBox.Show("Reminder saved successfully.");
         }
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
