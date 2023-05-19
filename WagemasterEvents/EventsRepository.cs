@@ -26,7 +26,7 @@ namespace WagemasterEvents.Database
             {
                 foreach (var eventItem in events)
                 {
-                    var existingEvent = connection.Query<Event>("SELECT * FROM EventsList WHERE Company = @Company AND ReminderType = @ReminderType AND Reminder = @Reminder AND DueDate = @DueDate AND NextReminderDate = @NextReminderDate AND Refno = @RefNo AND DatabasePath = @DatabasePath AND Refname = @RefName", eventItem).FirstOrDefault();
+                    var existingEvent = connection.Query<Event>("SELECT * FROM EventsList WHERE Company = @Company AND ReminderType = @ReminderType AND Reminder = @Reminder AND DueDate = @DueDate AND Refno = @RefNo AND DatabasePath = @DatabasePath AND Refname = @RefName", eventItem).FirstOrDefault();
 
                     if (existingEvent == null)
                     {

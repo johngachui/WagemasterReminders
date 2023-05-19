@@ -182,7 +182,7 @@ namespace WagemasterEvents
             EventsRepository.SaveEvents(fetchedEvents);
 
             // Load events from the database into the view model, including the dismissed events
-            var loadedEvents = EventsRepository.GetEvents(false); // Include dismissed events
+            var loadedEvents = EventsRepository.GetEvents(true); // Include dismissed events
 
             // Update the events collection in the MainWindow class on the UI thread
             Application.Current.Dispatcher.Invoke(() =>
@@ -198,31 +198,14 @@ namespace WagemasterEvents
             var now = DateTime.Now;
             var notifiedEvents = loadedEvents.Where(eventItem => eventItem.NextReminderDate <= now && !eventItem.Dismissed).ToList();
 
-            if (notifiedEvents.Count > 0)
+            if (notifiedEvents.Count > 0 && this.Visibility == Visibility.Hidden)
             {
                 MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     ShowWindowCommand.Execute(null);
-
-                    if (WindowState == WindowState.Minimized)
-                    {
-                        // Restore the MainWindow if it was previously maximized
-                        if (previousWindowState == WindowState.Maximized)
-                        {
-                            ShowWindowCommand.Execute(null); // Invoke the ShowWindowCommand
-                        }
-                        else
-                        {
-                            ShowWindowCommand.Execute(null); // Invoke the ShowWindowCommand
-                            WindowState = WindowState.Normal; // Set the WindowState to Normal
-                        }
-                    }
-
-                    // Update button text
-                    ToggleDismissedButton.Content = showDismissed ? "Hide Dismissed" : "Show Dismissed";
+                    
                 });
-                                
             }
         }
 
@@ -267,7 +250,24 @@ namespace WagemasterEvents
         {
             // Open the MainSettings.xaml window
             var settingsWindow = new MainSettings();
+            // Subscribe to the event
+            settingsWindow.CacheTimeChanged += Settings_CacheTimeChanged;
+            
             settingsWindow.ShowDialog();
+
+            // Unsubscribe when the settings window is closed to avoid memory leaks
+            settingsWindow.CacheTimeChanged -= Settings_CacheTimeChanged;
+        }
+
+        private void Settings_CacheTimeChanged(int newCacheTime)
+        {
+            Debug.WriteLine($"Settings_CacheTimeChanged");
+            // Here, change your timer interval according to the new cache time.
+            apiFetchTimer.Stop();
+            
+            apiFetchTimer.Interval = SettingsRepository.GetSettings().CacheTime * 1000 * 60;
+
+            apiFetchTimer.Start();
         }
 
         public ICommand ShowWindowCommand { get; }
@@ -277,8 +277,12 @@ namespace WagemasterEvents
             this.Show();
             this.WindowState = WindowState.Normal;
         }
-
-        private void MainWindow_Closing(object sender, CancelEventArgs e)
+        private void MinimiseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Hide();
+            //this.WindowState = WindowState.Minimized;
+        }
+            private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
             if (minimizeToTray)
             {
