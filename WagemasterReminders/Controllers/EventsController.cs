@@ -15,11 +15,36 @@ namespace YourProjectName.Controllers
             _databaseService = databaseService;
         }
 
-        // GET: api/Events
-        [HttpGet]
-        public ActionResult<IEnumerable<Event>> GetEvents()
+        // POST: api/Events
+        [HttpPost]
+        public ActionResult<IEnumerable<Event>> GetEvents([FromBody] UserLogin userLogin)
         {
-            return Ok(_databaseService.GetEvents());
+            // Here, GetEvents reads multiple database paths from INI file and checks each of them for the user.
+            var events = _databaseService.GetEvents(userLogin.Username, userLogin.Password);
+            if (events == null || events.Count == 0)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(events);
         }
+
+
+
+        [HttpPost("update/{id}")]
+        public ActionResult UpdateEvent(int id, [FromBody] UpdateEventRequest request)
+        {
+            // Check if user is authenticated using HttpContext.Items
+            if (HttpContext.Items["User"] is not User user)
+                return Unauthorized();
+
+            if (!_databaseService.UpdateEvent(id, request.Dismissed, request.Username, request.DatabasePath, request.Password))
+                return NotFound();
+
+            return Ok();
+        }
+
+
     }
+
 }
