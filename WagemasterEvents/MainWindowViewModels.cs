@@ -30,6 +30,7 @@ namespace WagemasterEvents
                 OnPropertyChanged();
             }
         }
+
         
         public event PropertyChangedEventHandler PropertyChanged;
 

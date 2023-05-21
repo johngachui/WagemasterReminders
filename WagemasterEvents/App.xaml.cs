@@ -29,7 +29,9 @@ namespace WagemasterEvents
         {
             var apiHelper = new ApiHelper();
             var server = SettingsRepository.GetSettings().Server;
-            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server);
+            var username = SettingsRepository.GetSettings().Username;
+            var password = SettingsRepository.GetSettings().Password;
+            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server,username,password);
             EventsRepository.SaveEvents(fetchedEvents);
         }
 

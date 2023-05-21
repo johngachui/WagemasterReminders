@@ -57,7 +57,9 @@ namespace WagemasterEvents
                 // Fetch new events from the API
                 var apiHelper = new ApiHelper();
                 var server = SettingsRepository.GetSettings().Server;
-                var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server);
+                var username = SettingsRepository.GetSettings().Username;
+                var password = SettingsRepository.GetSettings().Password;
+                var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server,username,password);
 
                 // Save new events to the database
                 EventsRepository.SaveEvents(fetchedEvents);
@@ -122,9 +124,10 @@ namespace WagemasterEvents
         {
             var apiHelper = new ApiHelper();
             var server = SettingsRepository.GetSettings().Server;
-
+            var username = SettingsRepository.GetSettings().Username;
+            var password = SettingsRepository.GetSettings().Password;
             // Fetch new events from the API and save them to the database
-            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server);
+            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server,username,password);
             EventsRepository.SaveEvents(fetchedEvents);
 
             // Load events from the database into the view model
@@ -176,7 +179,9 @@ namespace WagemasterEvents
             // Fetch new events from the API
             var apiHelper = new ApiHelper();
             var server = SettingsRepository.GetSettings().Server;
-            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server);
+            var username = SettingsRepository.GetSettings().Username;
+            var password = SettingsRepository.GetSettings().Password;
+            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server,username,password);
 
             // Save new events to the database
             EventsRepository.SaveEvents(fetchedEvents);
@@ -200,7 +205,7 @@ namespace WagemasterEvents
 
             if (notifiedEvents.Count > 0 && this.Visibility == Visibility.Hidden)
             {
-                MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} tasks due");
+                MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} Wagemaster reminders due");
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     ShowWindowCommand.Execute(null);
