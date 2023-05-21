@@ -34,10 +34,7 @@ namespace YourProjectName.Controllers
         [HttpPost("update/{id}")]
         public ActionResult UpdateEvent(int id, [FromBody] UpdateEventRequest request)
         {
-            // Check if user is authenticated using HttpContext.Items
-            //if (HttpContext.Items["User"] is not User user)
-            //    return Unauthorized();
-
+            
             if (!_databaseService.UpdateEvent(id, request.Dismissed, request.DatabasePath, request.Username, request.Password))
                 return NotFound();
 

@@ -29,41 +29,49 @@ namespace YourProjectName.Services
         public bool GetUser(string username, string password, string databasePath)
 
         {
-            _logger.LogInformation($"databasePath = {databasePath}"); //SHOW ROWCOUNT 
-            string connectionString = GetConnectionString(databasePath);
-            using (OleDbConnection connection = new OleDbConnection(connectionString))
+            try
             {
-                connection.Open();
-
-                // Check if the PASSWORDS table is empty
-                string countQuery = "SELECT COUNT(*) FROM PASSWORDS";
-                using (OleDbCommand countCommand = new OleDbCommand(countQuery, connection))
+                _logger.LogInformation($"databasePath = {databasePath}"); //SHOW ROWCOUNT 
+                string connectionString = GetConnectionString(databasePath);
+                using (OleDbConnection connection = new OleDbConnection(connectionString))
                 {
-                    int rowCount = (int)countCommand.ExecuteScalar();
-                    _logger.LogInformation($"rowCount = {rowCount}"); //SHOW ROWCOUNT                                        
-                    if (rowCount == 0)
+                    connection.Open();
+
+                    // Check if the PASSWORDS table is empty
+                    string countQuery = "SELECT COUNT(*) FROM PASSWORDS";
+                    using (OleDbCommand countCommand = new OleDbCommand(countQuery, connection))
                     {
-                        _logger.LogInformation($"return1 = true"); //SHOW ROWCOUNT 
-                        return true;  // Return true if the PASSWORDS table is empty
+                        int rowCount = (int)countCommand.ExecuteScalar();
+                        _logger.LogInformation($"rowCount = {rowCount}"); //SHOW ROWCOUNT                                        
+                        if (rowCount == 0)
+                        {
+                            _logger.LogInformation($"return1 = true"); //SHOW ROWCOUNT 
+                            return true;  // Return true if the PASSWORDS table is empty
+                        }
                     }
-                }
 
-                // Query to find a user with the provided username and SHOW_REMINDERS permission
-                string userQuery = "SELECT [SHOW_REMINDERS] FROM PASSWORDS WHERE [USER NAME]=@UserName AND [PASSWORD]=@Password";
-                using (OleDbCommand userCommand = new OleDbCommand(userQuery, connection))
-                {
-                    userCommand.Parameters.AddWithValue("@UserName", username);
-                    userCommand.Parameters.AddWithValue("@Password", password);
-
-                    object result = userCommand.ExecuteScalar();
-                    if (result != null)
+                    // Query to find a user with the provided username and SHOW_REMINDERS permission
+                    string userQuery = "SELECT [SHOW_REMINDERS] FROM PASSWORDS WHERE [USER NAME]=@UserName AND [PASSWORD]=@Password";
+                    using (OleDbCommand userCommand = new OleDbCommand(userQuery, connection))
                     {
-                        return Convert.ToBoolean(result);
+                        userCommand.Parameters.AddWithValue("@UserName", username);
+                        userCommand.Parameters.AddWithValue("@Password", password);
+
+                        object result = userCommand.ExecuteScalar();
+                        if (result != null)
+                        {
+                            return Convert.ToBoolean(result);
+                        }
                     }
                 }
             }
-
+            catch (Exception ex)
+            {
+                // Log the error
+                _logger.LogInformation($"GetUse error: {ex}");
+            }
             return false;  // Return false if user was not found or if user does not have SHOW_REMINDERS permission
+
         }
 
 
@@ -178,7 +186,7 @@ namespace YourProjectName.Services
                     
                     connection.Open();
 
-                    string query = "SELECT ID, REF_NUM, REF_NAME, REMINDER_TYPE, REMINDER_MSG, REF_DATE, REMINDER_DATE, COMPANY, DISMISS FROM API_REMINDERS";
+                    string query = "SELECT ID, REF_NUM, REF_NAME, REMINDER_TYPE, REMINDER_MSG, REF_DATE, REMINDER_DATE, COMPANY, DISMISS FROM API_REMINDERS WHERE SHOW = TRUE";
                     using (OleDbCommand command = new OleDbCommand(query, connection))
                     {
                         
