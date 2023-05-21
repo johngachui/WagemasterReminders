@@ -12,13 +12,15 @@ namespace WagemasterEvents.Database
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
-                var settings = connection.QueryFirstOrDefault<Settings>("SELECT Server , [Cache Time] as Cachetime FROM Settings LIMIT 1");
+                var settings = connection.QueryFirstOrDefault<Settings>("SELECT Server , [Cache Time] as Cachetime, Username, Password FROM Settings LIMIT 1");
                 if (settings == null)
                 {
                     settings = new Settings
                     {
                         Server = "localhost",
-                        CacheTime = 180
+                        CacheTime = 180,
+                        Username = "Username",
+                        Password = "Password"
                     };
                 }
                 else
@@ -32,14 +34,24 @@ namespace WagemasterEvents.Database
                     {
                         settings.CacheTime = 180;
                     }
- 
+
+                    if (settings.Username == null)
+                    {
+                        settings.Username = "Username";
+                    }
+
+                    if (settings.Password == null)
+                    {
+                        settings.Password = "Password";
+                    }
+
                 }
 
                 return settings;
             }
         }
 
-        public static void UpdateSettings(string server, int cacheTime)
+        public static void UpdateSettings(string server, int cacheTime, string username, string password)
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
@@ -51,11 +63,11 @@ namespace WagemasterEvents.Database
 
                 if (existingSettings == null)
                 {
-                    string sqlInsert = "INSERT INTO Settings (Server, [Cache Time]) VALUES (@Server, @CacheTime)";
+                    string sqlInsert = "INSERT INTO Settings (Server, [Cache Time], Username, Password) VALUES (@Server, @CacheTime, @Username, @Password)";
                     Debug.WriteLine($"Executing SQL query: {sqlInsert} with values {server} and {cacheTime}");
                     try
                     {
-                        connection.Execute(sqlInsert, new { Server = server, CacheTime = cacheTime });
+                        connection.Execute(sqlInsert, new { Server = server, CacheTime = cacheTime, Username = username, Password = password});
                     }
                     catch (SQLiteException e)
                     {
@@ -64,11 +76,11 @@ namespace WagemasterEvents.Database
                 }
                 else
                 {
-                    string sqlUpdate = "UPDATE Settings SET Server = @Server, [Cache Time] = @CacheTime WHERE Id = @Id";
+                    string sqlUpdate = "UPDATE Settings SET Server = @Server, [Cache Time] = @CacheTime, Username = @Username, Password = @Password WHERE Id = @Id";
                     Debug.WriteLine($"Executing SQL query: {sqlUpdate}");
                     try
                     {
-                        connection.Execute(sqlUpdate, new { Server = server, CacheTime = cacheTime, Id = existingSettings.Id });
+                        connection.Execute(sqlUpdate, new { Server = server, CacheTime = cacheTime, Username = username,Password =password, Id = existingSettings.Id });
                     }
                     catch (SQLiteException e)
                     {

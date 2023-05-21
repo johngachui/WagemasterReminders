@@ -26,7 +26,7 @@ namespace WagemasterEvents.Database
                     {
                         Debug.WriteLine($"Table  does not exist");
                         // Create the EventsList table
-                        var createTableSql = "CREATE TABLE EventsList (Id INTEGER PRIMARY KEY AUTOINCREMENT, Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER)";
+                        var createTableSql = "CREATE TABLE EventsList (ID INTEGER, Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER)";
                         try
                         {
                             connection.Execute(createTableSql);
@@ -52,13 +52,13 @@ namespace WagemasterEvents.Database
                     {
                         // Create the Settings table
                         using (var createTableCommand = new SQLiteCommand(
-                            "CREATE TABLE Settings (Id INTEGER PRIMARY KEY AUTOINCREMENT, Server TEXT, [Cache Time] INTEGER)", connection))
+                            "CREATE TABLE Settings (Id INTEGER PRIMARY KEY AUTOINCREMENT, Server TEXT, [Cache Time] INTEGER), Username TEXT, Password TEXT", connection))
                         {
                             createTableCommand.ExecuteNonQuery();
 
                             // Insert default values
                             using (var insertCommand = new SQLiteCommand(
-                                "INSERT INTO Settings (Server, [Cache Time]) VALUES ('localhost', 300)", connection))
+                                "INSERT INTO Settings (Server, [Cache Time], Username, Password) VALUES ('localhost', 180,'Username','Password')", connection))
                             {
                                 insertCommand.ExecuteNonQuery();
                             }

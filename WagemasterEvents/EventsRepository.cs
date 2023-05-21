@@ -30,7 +30,7 @@ namespace WagemasterEvents.Database
 
                     if (existingEvent == null)
                     {
-                        connection.Execute("INSERT INTO EventsList (Company, ReminderType, Reminder, DueDate, NextReminderDate, Refno, DatabasePath, Refname, Dismissed) VALUES (@Company, @ReminderType, @Reminder, @DueDate, @NextReminderDate, @RefNo, @DatabasePath, @RefName,0)", eventItem);
+                        connection.Execute("INSERT INTO EventsList (Company, ReminderType, Reminder, DueDate, NextReminderDate, Refno, DatabasePath, Refname, Dismissed) VALUES (@Company, @ReminderType, @Reminder, @DueDate, @NextReminderDate, @RefNo, @DatabasePath, @RefName,@Dismissed)", eventItem);
                     }
                 }
             }

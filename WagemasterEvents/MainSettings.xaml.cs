@@ -22,6 +22,8 @@ namespace WagemasterEvents
             var settings = SettingsRepository.GetSettings();
             ServerTextBox.Text = settings.Server;
             CacheTimeTextBox.Text = settings.CacheTime.ToString();
+            UsernameTextBox.Text = settings.Username;
+            PasswordTextBox.Text = settings.Password;
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -31,10 +33,12 @@ namespace WagemasterEvents
                 // Save settings to the database here
                 var server = ServerTextBox.Text;
                 var cacheTime = int.Parse(CacheTimeTextBox.Text);
+                var username = !string.IsNullOrEmpty(UsernameTextBox.Text) ? UsernameTextBox.Text : "Username";
+                var password = !string.IsNullOrEmpty(PasswordTextBox.Text) ? PasswordTextBox.Text : "Password";
 
                 Debug.WriteLine($"Saving settings: server={server}, cacheTime={cacheTime}");
 
-                SettingsRepository.UpdateSettings(server, cacheTime);
+                SettingsRepository.UpdateSettings(server, cacheTime,username,password);
                 CacheTimeChanged?.Invoke(int.Parse(CacheTimeTextBox.Text));
                 MessageBox.Show("Settings saved successfully.");
                 Close();
