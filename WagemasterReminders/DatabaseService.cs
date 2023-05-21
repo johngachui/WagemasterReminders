@@ -29,6 +29,7 @@ namespace YourProjectName.Services
         public bool GetUser(string username, string password, string databasePath)
 
         {
+            _logger.LogInformation($"databasePath = {databasePath}"); //SHOW ROWCOUNT 
             string connectionString = GetConnectionString(databasePath);
             using (OleDbConnection connection = new OleDbConnection(connectionString))
             {
@@ -127,7 +128,6 @@ namespace YourProjectName.Services
                      
                 }
             }
-
             return events;
         }
 
