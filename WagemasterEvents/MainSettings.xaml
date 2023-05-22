@@ -44,7 +44,7 @@
         <Label Content="Wagemaster username :" Grid.Row="2" Margin="20,10,0,0"/>
         <TextBox x:Name="UsernameTextBox" Grid.Row="2" Margin="130,15,0,0" Height="25" Width="150"/>
         <Label Content="Wagemaster password :" Grid.Row="3" Margin="20,10,0,0"/>
-        <TextBox x:Name="PasswordTextBox" Grid.Row="3" Margin="130,15,0,0" Height="25" Width="150"/>
+        <PasswordBox x:Name="PasswordTextBox" Grid.Row="3" Margin="130,15,0,0" Height="25" Width="150"/>
         <Button x:Name="SaveButton" Content="Save" Grid.Row="4" Click="SaveButton_Click" Width="70"/>
 
     </Grid>

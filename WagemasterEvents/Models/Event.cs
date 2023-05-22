@@ -18,7 +18,7 @@ namespace WagemasterEvents.Models
         private string company;
         private bool dismissed;
 
-        [JsonPropertyName("ID")]
+        [JsonPropertyName("id")]
         public int ID
         {
             get { return id; }

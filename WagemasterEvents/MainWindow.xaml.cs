@@ -225,7 +225,7 @@ namespace WagemasterEvents
             LoadEvents();
         }
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show("Are you sure you want to save changes?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result == MessageBoxResult.Yes)
@@ -236,6 +236,23 @@ namespace WagemasterEvents
                 if (selectedEvent != null)
                 {
                     EventsRepository.UpdateEvent(selectedEvent);
+
+                    // API update
+                    var apiHelper = new ApiHelper();
+                    var server = SettingsRepository.GetSettings().Server;
+                    var username = SettingsRepository.GetSettings().Username;
+                    var password = SettingsRepository.GetSettings().Password;
+                    var updatedSuccessfully = await apiHelper.UpdateEventAsync(server, username, password, selectedEvent);
+
+                    if (updatedSuccessfully)
+                    {
+                        Debug.WriteLine("Event updated successfully in API");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Error updating event in API");
+                    }
+
                     showDismissed = !showDismissed;
                     events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
 
