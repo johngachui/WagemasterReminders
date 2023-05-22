@@ -5,38 +5,53 @@
         Title="Wagemaster reminders" Height="570" Width="550" WindowStyle="ToolWindow">
     <Window.Resources>
         <Style TargetType="Button">
-            <Setter Property="Background" Value="#333333" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#1F1F1F" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Cursor" Value="Hand"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
+
         <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#333333" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#1F1F1F" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#FFFFFF" />
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
         </Style>
         <Style TargetType="ListBox">
-            <Setter Property="Background" Value="#333333" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#1F1F1F" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
             <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
-        
         <Style TargetType="MenuItem">
-            <Setter Property="Background" Value="#333333" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#1F1F1F" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
         </Style>
-
         <Style TargetType="Grid">
-            <Setter Property="Background" Value="#222222" />
+            <Setter Property="Background" Value="#141414" />
         </Style>
-        
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
         </Style>
-        
         <Style TargetType="CheckBox">
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
         </Style>
-
-        
     </Window.Resources>
+
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
