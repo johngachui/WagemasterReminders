@@ -69,7 +69,7 @@
             </Menu>
             <Button x:Name="ToggleDismissedButton" Content="Show Dismissed" Margin="5,5,0,0" Width="125" Height="25" Click="ToggleDismissedButton_Click"/>
             <Button x:Name="SaveButton" Content="Save" Width="50" Height="25" Margin="5,5,0,0" Click="SaveButton_Click"/>
-            <Button x:Name="ResetButton" Content="Reset" Width="50" Height="25" Margin="100,5,0,0" HorizontalAlignment="Right" Click="ResetButton_Click"/>
+            <Button x:Name="ResetButton" Content="Reset" Width="50" Height="25" Margin="85,5,0,0" HorizontalAlignment="Right" Click="ResetButton_Click"/>
             <Button x:Name="MinimiseButton" Content="Minimise" Width="70" Height="25" Margin="5,5,0,0" HorizontalAlignment="Right" Click="MinimiseButton_Click"/>
         </StackPanel>
 
@@ -113,13 +113,13 @@
                             <TextBox Text="{Binding Refname}" IsReadOnly="True" Grid.Column="1" Margin="10,0,0,0" Grid.Row="3"/>
 
                             <TextBlock Text="Due Date:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="4" Margin="5,2,0,0"/>
-                            <DatePicker SelectedDate="{Binding DueDate}"  IsEnabled="False" Grid.Column="1" Margin="10,2,0,0"  SelectedDateFormat="Long" Grid.Row="4" BorderThickness ="2"/>
+                            <TextBox Text="{Binding DueDate}"  IsReadOnly="True" Grid.Column="1" Margin="10,0,0,0" Grid.Row="4"/>
 
-                            <TextBlock Text="Next Reminder Date:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="5" Margin="5,5,0,0"/>
+                            <TextBlock Text="Next Reminder Date:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="5" Margin="5,3,0,0"/>
                             <DatePicker SelectedDate="{Binding NextReminderDate}" Grid.Column="1" Margin="10,5,0,0"  SelectedDateFormat="Long" Grid.Row="5" BorderThickness ="2"/>
 
                             <TextBlock Text="Dismissed:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="6" Margin="5,0,0,0"/>
-                            <CheckBox IsChecked="{Binding Dismissed}" Grid.Column="1" Margin="10,5,0,0" Grid.Row="6"/>
+                            <CheckBox IsChecked="{Binding Dismissed}" Grid.Column="1" Margin="10,3,0,0" Grid.Row="6"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

@@ -74,12 +74,12 @@ namespace WagemasterEvents.Models
         }
 
         [JsonPropertyName("refDate")]
-        public DateTime DueDate
+        public string DueDate
         {
-            get { return dueDate; }
+            get { return dueDate.ToString("D"); }
             set
             {
-                dueDate = value;
+                dueDate = DateTime.Parse(value);
                 OnPropertyChanged();
             }
         }
