@@ -122,33 +122,40 @@ namespace WagemasterEvents
 
         private async void LoadEvents()
         {
-            var apiHelper = new ApiHelper();
-            var server = SettingsRepository.GetSettings().Server;
-            var username = SettingsRepository.GetSettings().Username;
-            var password = SettingsRepository.GetSettings().Password;
-            // Fetch new events from the API and save them to the database
-            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server,username,password);
-            EventsRepository.SaveEvents(fetchedEvents);
-
-            // Load events from the database into the view model
-            var loadedEvents = EventsRepository.GetEvents(showDismissed);
-
-            Application.Current.Dispatcher.Invoke(() =>
+            try
             {
-                events = new ObservableCollection<Event>(loadedEvents);
-                DataContext = new MainWindowViewModel { Events = events };
-                var viewModel = (MainWindowViewModel)DataContext;
-                viewModel.SelectedEvent = events.FirstOrDefault();
-            });
+                var apiHelper = new ApiHelper();
+                var server = SettingsRepository.GetSettings().Server;
+                var username = SettingsRepository.GetSettings().Username;
+                var password = SettingsRepository.GetSettings().Password;
+                // Fetch new events from the API and save them to the database
+                var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server, username, password);
+                EventsRepository.SaveEvents(fetchedEvents);
 
-            ListBox listBox = null;
-            Application.Current.Dispatcher.Invoke(() =>
+                // Load events from the database into the view model
+                var loadedEvents = EventsRepository.GetEvents(showDismissed);
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    events = new ObservableCollection<Event>(loadedEvents);
+                    DataContext = new MainWindowViewModel { Events = events };
+                    var viewModel = (MainWindowViewModel)DataContext;
+                    viewModel.SelectedEvent = events.FirstOrDefault();
+                });
+
+                ListBox listBox = null;
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    listBox = (ListBox)FindName("EventsListBox");
+                    listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
+                });
+            }
+            catch (Exception ex)
             {
-                listBox = (ListBox)FindName("EventsListBox");
-                listBox.ItemContainerGenerator.StatusChanged += ListBoxItemContainerGenerator_StatusChanged;
-            });
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.WriteLine("Stack Trace: " + ex.StackTrace);
+            }
 
-            
         }
         private void ListBoxItemContainerGenerator_StatusChanged(object sender, EventArgs e)
         {

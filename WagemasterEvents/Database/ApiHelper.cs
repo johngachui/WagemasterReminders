@@ -14,7 +14,7 @@ namespace WagemasterEvents.Database
     {
         private static HttpClient client = new HttpClient();
 
-        public async Task<List<Event>> FetchEventsFromApiAsync(string server, string username, string password)
+        public async Task<List<Event>> FetchEventsFromApiAsync(string? server, string? username, string? password)
         {
             List<Event> eventsList = new List<Event>();
 
@@ -54,7 +54,7 @@ namespace WagemasterEvents.Database
         }
 
 
-        public async Task<bool> UpdateEventAsync(string server, string username, string password, Event eventToUpdate)
+        public async Task<bool> UpdateEventAsync(string? server, string? username, string? password, Event eventToUpdate)
         {
             try
             {

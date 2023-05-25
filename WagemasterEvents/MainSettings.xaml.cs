@@ -22,33 +22,48 @@ namespace WagemasterEvents
 
         private void LoadSettings()
         {
-            var settings = SettingsRepository.GetSettings();
-            ServerComboBox.ItemsSource = GetServerNamesFromDatabasePaths(ReadIniFile());
-            ServerComboBox.Text = settings.Server;
-            CacheTimeTextBox.Text = settings.CacheTime.ToString();
-            UsernameTextBox.Text = settings.Username;
-            PasswordTextBox.Password = settings.Password;
+            try
+            {
+                var settings = SettingsRepository.GetSettings();
+                ServerComboBox.ItemsSource = GetServerNamesFromDatabasePaths(ReadIniFile());
+                ServerComboBox.Text = settings.Server;
+                CacheTimeTextBox.Text = settings.CacheTime.ToString();
+                UsernameTextBox.Text = settings.Username;
+                PasswordTextBox.Password = settings.Password;
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.WriteLine("Stack Trace: " + ex.StackTrace);
+            }
         }
 
         private List<string> GetServerNamesFromDatabasePaths(List<string> databasePaths)
         {
             List<string> serverNames = new List<string> { "localhost" };
 
-            foreach (var path in databasePaths)
+            try
             {
-                if (path.StartsWith("\\\\"))
+                foreach (var path in databasePaths)
                 {
-                    var serverName = path.Split('\\')[2];
-                    if (!serverNames.Contains(serverName))
-                        serverNames.Add(serverName);
-                }
-                else
-                {
-                    if (!serverNames.Contains("localhost"))
-                        serverNames.Add("localhost");
+                    if (path.StartsWith("\\\\"))
+                    {
+                        var serverName = path.Split('\\')[2];
+                        if (!serverNames.Contains(serverName))
+                            serverNames.Add(serverName);
+                    }
+                    else
+                    {
+                        if (!serverNames.Contains("localhost"))
+                            serverNames.Add("localhost");
+                    }
                 }
             }
-
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.WriteLine("Stack Trace: " + ex.StackTrace);
+            }
             return serverNames;
         }
         private void SaveButton_Click(object sender, RoutedEventArgs e)

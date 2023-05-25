@@ -12,10 +12,14 @@
   <ItemGroup>
     <None Remove="icon.ico" />
     <None Remove="Resources\icon.ico" />
+    <None Remove="WagemasterEvents.db" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="icon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WagemasterEvents.db">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -35,12 +39,6 @@
     <Resource Include="Resources\icon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="WagemasterEvents.db">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
