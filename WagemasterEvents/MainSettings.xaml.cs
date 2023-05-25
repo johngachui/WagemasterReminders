@@ -32,7 +32,7 @@ namespace WagemasterEvents
 
         private List<string> GetServerNamesFromDatabasePaths(List<string> databasePaths)
         {
-            List<string> serverNames = new List<string>();
+            List<string> serverNames = new List<string> { "localhost" };
 
             foreach (var path in databasePaths)
             {
