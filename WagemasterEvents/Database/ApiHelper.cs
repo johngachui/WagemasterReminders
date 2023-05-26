@@ -68,7 +68,7 @@ namespace WagemasterEvents.Database
                     Password = password
                 };
                 // Replace single backslash with double backslash in the DatabasePath
-                string updatedDatabasePath = eventToUpdate.DatabasePath.Replace("\\", "\\\\");
+                string updatedDatabasePath = eventToUpdate.DatabasePath; //.Replace("\\", "\\\\");
                 // Prepare the event to be updated
                 var updatedEvent = new
                 {
@@ -91,15 +91,25 @@ namespace WagemasterEvents.Database
                 {
                     // Serializing object to JSON
                     var json = JsonSerializer.Serialize(updateUserAndEvent);
-                    Debug.WriteLine(json);
+                    //Debug.WriteLine(json);
                     // Converting JSON to HttpContent
                     var data = new StringContent(json, Encoding.UTF8, "application/json");
-                    Debug.WriteLine($"Log3:{url} and {data}");
+                    //Debug.WriteLine($"Log3:{url} and {data}");
                     // Sending a POST request
-                    HttpResponseMessage response = await client.PostAsync(url, data);
-                    response.EnsureSuccessStatusCode();
+                    try
+                    {
+                        HttpResponseMessage response = await client.PostAsync(url, data);
+                        response.EnsureSuccessStatusCode();
 
-                    return response.IsSuccessStatusCode;
+                        return response.IsSuccessStatusCode;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error1 updating event via API: {ex.Message}");
+                        Debug.WriteLine($"Exception details: {ex.ToString()}");
+                        return false;
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
