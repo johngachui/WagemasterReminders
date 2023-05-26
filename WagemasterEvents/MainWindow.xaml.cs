@@ -107,7 +107,7 @@ namespace WagemasterEvents
             else if (previousWindowState == WindowState.Minimized && WindowState == WindowState.Normal)
             {
                 // Maximize the MainWindow
-                WindowState = WindowState.Maximized;
+                WindowState = WindowState.Normal;
             }
         }
 
@@ -219,7 +219,10 @@ namespace WagemasterEvents
                 MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} Wagemaster reminders due");
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    ShowWindowCommand.Execute(null);
+                    if (this.WindowState != WindowState.Minimized)
+                    {
+                        ShowWindowCommand.Execute(null);
+                    }
                     
                 });
             }
@@ -315,7 +318,7 @@ namespace WagemasterEvents
             this.Hide();
             //this.WindowState = WindowState.Minimized;
         }
-            private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
             if (minimizeToTray)
             {
