@@ -3,13 +3,26 @@ using Microsoft.Data.Sqlite;
 using System;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.IO;
 
 namespace WagemasterEvents.Database
 {
     public class DatabaseHelper
     {
-        public static string ConnectionString => $"Data Source={AppDomain.CurrentDomain.BaseDirectory}WagemasterEvents.db;";
-        
+        //public static string ConnectionString => $"Data Source={AppDomain.CurrentDomain.BaseDirectory}WagemasterEvents.db;";
+        public static string ConnectionString
+        {
+            get
+            {
+                string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string databaseFolderPath = Path.Combine(appDataPath, "Wagemaster Reminders");
+                // Ensure the directory exists
+                Directory.CreateDirectory(databaseFolderPath);
+                string databaseFilePath = Path.Combine(databaseFolderPath, "WagemasterEvents.db");
+
+                return $"Data Source={databaseFilePath};";
+            }
+        }
         public static void InitializeDatabase()
         {
             //Debug.WriteLine($"Database file path: {ConnectionString}");
