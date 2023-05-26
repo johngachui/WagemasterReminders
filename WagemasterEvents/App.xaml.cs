@@ -6,7 +6,7 @@ namespace WagemasterEvents
 {
     public partial class App : System.Windows.Application
     {
-        private NotifyIcon notifyIcon;
+        private NotifyIcon? notifyIcon;
 
         protected override void OnStartup(StartupEventArgs e)
         {

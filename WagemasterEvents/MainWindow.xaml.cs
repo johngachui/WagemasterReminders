@@ -17,15 +17,19 @@ namespace WagemasterEvents
     public partial class MainWindow : Window
     {
         private bool showDismissed = false;
-        private ObservableCollection<Event> events;
+        private ObservableCollection<Event>? events;
         private System.Timers.Timer apiFetchTimer;
-        private Event selectedEvent;
+        private Event? selectedEvent;
         private WindowState previousWindowState;
         private bool minimizeToTray = true;
+        public event Action<int>? CacheTimeChanged;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            // Initialize the collection
+            events = new ObservableCollection<Event>();
 
             // Register the SizeChanged event handler
             SizeChanged += MainWindow_SizeChanged;
@@ -84,7 +88,7 @@ namespace WagemasterEvents
             }
         }
 
-        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void MainWindow_SizeChanged(object? sender, SizeChangedEventArgs e)
         {
             if (WindowState == WindowState.Minimized)
             {
@@ -93,7 +97,7 @@ namespace WagemasterEvents
             }
         }
 
-        private void MainWindow_StateChanged(object sender, EventArgs e)
+        private void MainWindow_StateChanged(object? sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized)
             {
@@ -108,13 +112,13 @@ namespace WagemasterEvents
         }
 
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(object? sender, RoutedEventArgs e)
         {
             apiFetchTimer.Start();
         }
 
         private bool eventsLoaded = false;
-        public ObservableCollection<Event> Events
+        public ObservableCollection<Event>? Events
         {
             get { return events; }
             set { events = value; }
@@ -157,7 +161,7 @@ namespace WagemasterEvents
             }
 
         }
-        private void ListBoxItemContainerGenerator_StatusChanged(object sender, EventArgs e)
+        private void ListBoxItemContainerGenerator_StatusChanged(object? sender, EventArgs e)
         {
             var generator = (ItemContainerGenerator)sender;
             if (generator.Status == GeneratorStatus.ContainersGenerated)
@@ -181,7 +185,7 @@ namespace WagemasterEvents
         }
 
 
-        private async void ApiFetchTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private async void ApiFetchTimer_Elapsed(object? sender, ElapsedEventArgs e)
         {
             // Fetch new events from the API
             var apiHelper = new ApiHelper();
@@ -275,7 +279,7 @@ namespace WagemasterEvents
             }
         }
 
-        private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        private void SettingsMenuItem_Click(object? sender, RoutedEventArgs e)
         {
             // Open the MainSettings.xaml window
             var settingsWindow = new MainSettings();
@@ -301,17 +305,17 @@ namespace WagemasterEvents
 
         public ICommand ShowWindowCommand { get; }
 
-        private void ShowWindow()
+        private void ShowWindow(object? _ = null)
         {
             this.Show();
             this.WindowState = WindowState.Normal;
         }
-        private void MinimiseButton_Click(object sender, RoutedEventArgs e)
+        private void MinimiseButton_Click(object? sender, RoutedEventArgs e)
         {
             this.Hide();
             //this.WindowState = WindowState.Minimized;
         }
-            private void MainWindow_Closing(object sender, CancelEventArgs e)
+            private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
             if (minimizeToTray)
             {

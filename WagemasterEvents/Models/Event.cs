@@ -30,7 +30,7 @@ namespace WagemasterEvents.Models
         }
 
         [JsonPropertyName("refNum")]
-        public string Refno
+        public string? Refno
         {
             get { return refno; }
             set
@@ -41,7 +41,7 @@ namespace WagemasterEvents.Models
         }
 
         [JsonPropertyName("refName")]
-        public string Refname
+        public string? Refname
         {
             get { return refname; }
             set
@@ -52,7 +52,7 @@ namespace WagemasterEvents.Models
         }
 
         [JsonPropertyName("reminderType")]
-        public string ReminderType
+        public string? ReminderType
         {
             get { return reminderType; }
             set
@@ -63,7 +63,7 @@ namespace WagemasterEvents.Models
         }
 
         [JsonPropertyName("reminderMsg")]
-        public string Reminder
+        public string? Reminder
         {
             get { return reminder; }
             set
@@ -96,7 +96,7 @@ namespace WagemasterEvents.Models
         }
 
         [JsonPropertyName("databasePath")]
-        public string DatabasePath
+        public string? DatabasePath
         {
             get { return databasePath; }
             set
@@ -107,7 +107,7 @@ namespace WagemasterEvents.Models
         }
 
         [JsonPropertyName("company")]
-        public string Company
+        public string? Company
         {
             get { return company; }
             set
@@ -128,9 +128,9 @@ namespace WagemasterEvents.Models
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

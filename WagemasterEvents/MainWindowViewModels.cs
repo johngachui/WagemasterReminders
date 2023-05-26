@@ -8,10 +8,10 @@ namespace WagemasterEvents
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
-        private ObservableCollection<Event> events;
-        private Event selectedEvent;
+        private ObservableCollection<Event>? events;
+        private Event? selectedEvent;
 
-        public ObservableCollection<Event> Events
+        public ObservableCollection<Event>? Events
         {
             get { return events; }
             set
@@ -21,7 +21,7 @@ namespace WagemasterEvents
             }
         }
 
-        public Event SelectedEvent
+        public Event? SelectedEvent
         {
             get { return selectedEvent; }
             set
@@ -32,9 +32,9 @@ namespace WagemasterEvents
         }
 
         
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

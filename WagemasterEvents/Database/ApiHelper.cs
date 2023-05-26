@@ -91,11 +91,11 @@ namespace WagemasterEvents.Database
                 {
                     // Serializing object to JSON
                     var json = JsonSerializer.Serialize(updateUserAndEvent);
-                    //Debug.WriteLine(json);
+                    Debug.WriteLine(json);
                     // Converting JSON to HttpContent
                     var data = new StringContent(json, Encoding.UTF8, "application/json");
-                    //Debug.WriteLine($"Log3:{url} and {data}");
-                    // Sending a PUT request
+                    Debug.WriteLine($"Log3:{url} and {data}");
+                    // Sending a POST request
                     HttpResponseMessage response = await client.PostAsync(url, data);
                     response.EnsureSuccessStatusCode();
 

@@ -20,7 +20,7 @@ namespace WagemasterEvents.Database
         }
 
         
-        public static void SaveEvents(IEnumerable<Event> events)
+        public static void SaveEvents(IEnumerable<Event>? events)
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
@@ -37,7 +37,7 @@ namespace WagemasterEvents.Database
         }
 
 
-        public static void UpdateEvent(Event eventItem)
+        public static void UpdateEvent(Event? eventItem)
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
@@ -45,7 +45,7 @@ namespace WagemasterEvents.Database
             }
         }
 
-        public static void DeleteEvents(Event eventItem)
+        public static void DeleteEvents(Event? eventItem)
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
