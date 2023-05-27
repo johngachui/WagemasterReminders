@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace WagemasterEvents
 {
@@ -23,6 +24,10 @@ namespace WagemasterEvents
         private WindowState previousWindowState;
         private bool minimizeToTray = true;
         public event Action<int>? CacheTimeChanged;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
 
         public MainWindow()
         {
@@ -86,6 +91,11 @@ namespace WagemasterEvents
 
                 MessageBox.Show("Reminders list reset successfully.");
             }
+        }
+
+        bool IsMessageBoxOpen(string caption)
+        {
+            return FindWindow(null, caption) != IntPtr.Zero;
         }
 
         private void MainWindow_SizeChanged(object? sender, SizeChangedEventArgs e)
@@ -216,15 +226,18 @@ namespace WagemasterEvents
 
             if (notifiedEvents.Count > 0 && this.Visibility == Visibility.Hidden)
             {
-                MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} Wagemaster reminders due");
-                Application.Current.Dispatcher.Invoke(() =>
+                if (!IsMessageBoxOpen("Wagemaster Payroll & HR")) // Use your MessageBox caption here
                 {
-                    if (this.Visibility == Visibility.Hidden)
+                    MessageBoxResult result = MessageBox.Show($"There are  {notifiedEvents.Count}  Wagemaster reminders due", "Wagemaster Payroll & HR");
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        ShowWindowCommand.Execute(null);
-                    }
-                    
-                });
+                        if (this.Visibility == Visibility.Hidden)
+                        {
+                            ShowWindowCommand.Execute(null);
+                        }
+
+                    });
+                }
             }
         }
 
