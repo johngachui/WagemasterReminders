@@ -219,7 +219,7 @@ namespace WagemasterEvents
                 MessageBoxResult result = MessageBox.Show($"There are {notifiedEvents.Count} Wagemaster reminders due");
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (this.WindowState != WindowState.Minimized)
+                    if (this.Visibility == Visibility.Hidden)
                     {
                         ShowWindowCommand.Execute(null);
                     }
@@ -258,14 +258,14 @@ namespace WagemasterEvents
                     var password = SettingsRepository.GetSettings().Password;
                     var updatedSuccessfully = await apiHelper.UpdateEventAsync(server, username, password, selectedEvent);
 
-                    if (updatedSuccessfully)
+                    /*if (updatedSuccessfully)
                     {
                         Debug.WriteLine("Event updated successfully in API");
                     }
                     else
                     {
                         Debug.WriteLine("Error updating event in API");
-                    }
+                    }*/
 
                     showDismissed = !showDismissed;
                     events = new ObservableCollection<Event>(EventsRepository.GetEvents(showDismissed));
@@ -297,7 +297,7 @@ namespace WagemasterEvents
 
         private void Settings_CacheTimeChanged(int newCacheTime)
         {
-            Debug.WriteLine($"Settings_CacheTimeChanged");
+            //Debug.WriteLine($"Settings_CacheTimeChanged");
             // Here, change your timer interval according to the new cache time.
             apiFetchTimer.Stop();
             

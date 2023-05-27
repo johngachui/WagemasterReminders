@@ -5,6 +5,7 @@ using System.Text;
 using System.Windows;
 using WagemasterEvents.Database;
 using System.IO;
+using System.Windows.Media.Imaging;
 
 namespace WagemasterEvents
 {
