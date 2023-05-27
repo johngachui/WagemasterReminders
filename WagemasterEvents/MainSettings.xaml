@@ -1,7 +1,7 @@
 ﻿<Window x:Class="WagemasterEvents.MainSettings"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Settings" Height="265" Width="360" WindowStyle="ToolWindow" AllowsTransparency="False" Background="Transparent">
+        Title="Settings" Height="265" Width="360" WindowStyle="ToolWindow" AllowsTransparency="False" ResizeMode="NoResize" Background="Transparent">
     <Window.Resources>
         <Style TargetType="Label">
             <Setter Property="Foreground" Value="#FFFFFF"/>
@@ -56,7 +56,7 @@
         </Grid.RowDefinitions>
             
         <Label Content="Server name :" Margin="20,20,0,0"/>
-        <ComboBox x:Name="ServerComboBox" Margin="70,25,0,0" Height="25" Width="210"/>
+        <ComboBox x:Name="ServerComboBox" IsEditable="True" Margin="70,25,0,0" Height="25" Width="210"/>
         <Label Content="Reminder interval (mins) :" Grid.Row="1" Margin="20,10,0,0"/>
         <TextBox x:Name="CacheTimeTextBox" Grid.Row="1" Margin="130,15,0,0" Height="25" Width="150"/>
         <Label Content="Wagemaster username :" Grid.Row="2" Margin="20,10,0,0"/>
