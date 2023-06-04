@@ -19,6 +19,9 @@ namespace YourProjectName.Controllers
         [HttpPost]
         public ActionResult<IEnumerable<Event>> GetEvents([FromBody] UserLogin userLogin)
         {
+            //Refresh repeating records in TASKS then the API REMINDERS table
+            _ = _databaseService.UpdateReminders(userLogin.DatabasePath, userLogin.Username, userLogin.Password);
+            
             // Here, GetEvents reads multiple database paths from INI file and checks each of them for the user.
             var events = _databaseService.GetEvents(userLogin.Username, userLogin.Password);
             if (events == null || events.Count == 0)
@@ -35,7 +38,7 @@ namespace YourProjectName.Controllers
         public ActionResult UpdateEvent(int id, [FromBody] UpdateEventRequest request)
         {
             
-            if (!_databaseService.UpdateEvent(id, request.Dismissed, request.DatabasePath, request.Username, request.Password))
+            if (!_databaseService.UpdateEvent(id, request.Dismissed, request.DatabasePath, request.Username, request.Password,request.Ref_ID,request.ReminderType))
                 return NotFound();
 
             return Ok();

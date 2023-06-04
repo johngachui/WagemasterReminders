@@ -14,7 +14,9 @@ namespace YourProjectName.Services
         List<Event> GetEvents(string username, string password);
         bool GetUser(string username, string password, string databasePath);
 
-        bool UpdateEvent(int id, bool dismissed, string username, string databasePath, string password);
+        bool UpdateEvent(int id, bool dismissed, string username, string databasePath, string password, int? ref_id, string reminderType);
+
+        bool UpdateReminders(string databasePath, string username, string password);
     }
 
     public class DatabaseService : IDatabaseService
@@ -75,7 +77,7 @@ namespace YourProjectName.Services
         }
 
 
-        public bool UpdateEvent(int id, bool dismissed, string databasePath, string username, string password)
+        public bool UpdateEvent(int id, bool dismissed, string databasePath, string username, string password, int? ref_id, string reminderType)
         {
             // Check if the user has permission to perform this operation
             if (!GetUser(username, password, databasePath))
@@ -88,15 +90,19 @@ namespace YourProjectName.Services
             string connectionString = GetConnectionString(databasePath);
             using (OleDbConnection connection = new OleDbConnection(connectionString))
             {
-                string query = $"UPDATE API_REMINDERS SET DISMISS = ? WHERE ID = ?";
+                string query = $"UPDATE API_REMINDERS SET DISMISS = ?, USER_DISMISSED = ?, DATE_DISMISSED = ? WHERE ID = ?";
 
                 try
                 {
                     connection.Open();
                     using (OleDbCommand command = new OleDbCommand(query, connection))
                     {
+                        DateTime currentDate = DateTime.Now.Date;
+
                         // Add parameters to prevent SQL Injection
                         command.Parameters.Add(new OleDbParameter("dismissed", dismissed));
+                        command.Parameters.Add(new OleDbParameter("user_dismissed", username));
+                        command.Parameters.Add(new OleDbParameter("date_dismissed", currentDate));
                         command.Parameters.Add(new OleDbParameter("id", id));
 
                         // Execute the query
@@ -107,6 +113,33 @@ namespace YourProjectName.Services
                             _logger.LogInformation($"No rows were updated. Event with id {id} might not exist in database {databasePath}");
                             return false;
                         }
+                        if (reminderType == "TASK")
+                        {
+                            try
+                            {
+                                string query2 = $"UPDATE TASKS SET COMPLETED = ?, USER_COMPLETED = ?, DATE_COMPLETED = ? WHERE ID = ? and MARK_COMPLETED_ON_DISMISSED = TRUE";
+                                using (OleDbCommand command2 = new OleDbCommand(query2, connection))
+                                {
+                                    command2.Parameters.Add(new OleDbParameter("dismissed2", dismissed));
+                                    command2.Parameters.Add(new OleDbParameter("user_completed", username));
+                                    command2.Parameters.Add(new OleDbParameter("date_completed", currentDate));
+                                    command2.Parameters.Add(new OleDbParameter("Refid", ref_id));
+
+                                    // Execute the query
+                                    int rowsAffected2 = command2.ExecuteNonQuery();
+                                    if (rowsAffected2 == 0)
+                                    {
+                                        _logger.LogInformation($"No rows were updated. Task with id {ref_id} might not exist in database {databasePath}");
+                                        return true;
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogInformation($"Error updating Task with ref_id {ref_id} and currentDate {currentDate} and username {username} and dismissed {dismissed}. Error: {ex.Message}");
+                                return false;
+                            }
+                        }
                         return true;
                     }
                 }
@@ -115,10 +148,120 @@ namespace YourProjectName.Services
                     _logger.LogInformation($"Error updating event with id {id} in database {databasePath}. Error: {ex.Message}");
                     return false;
                 }
+
             }
         }
 
+        public bool UpdateReminders(string databasePath, string username, string password)
+        {
+            // Check if the user has permission to perform this operation
+            if (!GetUser(username, password, databasePath))
+            {
+                _logger.LogInformation($"User {username} attempted to access database {databasePath}, but does not have necessary permissions");
+                return false;
+            }
+            else
+            {
+                _logger.LogInformation($"UpdateReminders started");
+            }
 
+            // Proceed with the update operation if permission granted...
+            string connectionString = GetConnectionString(databasePath);
+            using (OleDbConnection connection = new OleDbConnection(connectionString))
+            {
+                //UPDATE API REMINDERS
+                //1. DELETE ALL REMINDERS EXCEPT THOSE DISMISSED
+                //2. UPDATE REPEAT TASKS
+                //3. UPDATE TASKS
+                //4. UPDATE EVERY OTHER REMINDER TYPE
+                //5. UPDATE COMPANY NAME AND SHOW
+
+                //DELETE 
+                string query = $"DELETE FROM API_REMINDERS WHERE DISMISS = FALSE";
+                _logger.LogInformation($"Query saved: {query}");
+
+                try
+                {
+                    connection.Open();
+                    using (OleDbCommand command = new OleDbCommand(query, connection))
+                    {
+                        // Execute the query
+                        int rowsAffected = command.ExecuteNonQuery();
+                    }
+                    
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogInformation($"Error erasing API REMINDERS. Error: {ex.Message}");
+                    return false;
+                }
+
+                //TASKS
+                //UPDATE REPEAT TASKS
+
+                //UPDATE TASK REMINDERS
+                query = @"INSERT INTO API_REMINDERS 
+                 ( REF_NUM, REF_DATE, REMINDER_TYPE, REF_NAME, REMINDER_MSG, REMINDER_DATE, REF_ID, TASK_USER ) 
+                 SELECT ' - ' AS Expr1, REMINDER_TASKS.DUE_DATE, 'TASK' AS TYPEX, REMINDER_TASKS.DESC, 'TASK' AS Expr3, 
+                 DateAdd('d',REMINDER_TASKS.REMIND_TASK_DAYS*-1,REMINDER_TASKS.DUE_DATE) AS DATEX, REMINDER_TASKS.ID, REMINDER_TASKS.USER 
+                 FROM 
+                 (SELECT TASKS.ID, TASKS.DESC, TASKS.ON_HOLD, TASKS.COMPLETED, TASKS.DUE_DATE, TASKS.FIRST_REMINDER_DATE, TASKS.REMIND_TASK_DAYS, 
+                 TASK_REMINDER_USERS.USER FROM Tasks Left Join TASK_REMINDER_USERS ON Tasks.ID = TASK_REMINDER_USERS.TASK 
+                 WHERE NOT EXISTS 
+                 (SELECT 1 FROM API_REMINDERS WHERE API_REMINDERS.REF_ID = Tasks.ID AND API_REMINDERS.REMINDER_TYPE = 'TASK') 
+                 AND Tasks.COMPLETED = False AND Tasks.ON_HOLD = False AND DateDiff('d',Now(),TASKS.DUE_DATE) <= TASKS.REMIND_TASK_DAYS) AS REMINDER_TASKS 
+                 WHERE 'TASK' = 'TASK';";
+
+
+                try
+                {
+                    using (OleDbCommand command = new OleDbCommand(query, connection))
+                    {
+                        // Execute the query
+                        int rowsAffected = command.ExecuteNonQuery();
+                    }
+                    _logger.LogInformation($"No error excuting query2");
+                    
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogInformation($"Error appending tasks to API REMINDERS. Error: {ex.Message}");
+                    return false;
+                }
+
+
+                //AFTER ALL UPDATES MARK REMINDERS AS SHOW IF REMINDERS ARE GLOBALLY ALLOWED
+                string shortName = "";
+                bool remindAllowed = false;
+                using (OleDbCommand cmd = new OleDbCommand("SELECT SHORT_NAME, REMIND FROM COMPANY_FILES WHERE LAST = true", connection))
+                {
+                    using (OleDbDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            shortName = reader.GetString(0);
+                            remindAllowed = reader.GetBoolean(1);
+                        }
+                    }
+                }
+                string updateQuery = "";
+                if (remindAllowed)
+                {
+                    updateQuery = "UPDATE API_REMINDERS SET COMPANY = @shortName, SHOW = true";
+                }
+                else
+                {
+                    updateQuery = "UPDATE API_REMINDERS SET COMPANY = @shortName, SHOW = false";
+                }
+                using (OleDbCommand updateCmd = new OleDbCommand(updateQuery, connection))
+                {
+                    updateCmd.Parameters.AddWithValue("@shortName", shortName);
+                    updateCmd.ExecuteNonQuery();
+                }
+                
+                return true;
+            }
+        }
 
         public List<Event> GetEvents(string username, string password)
         {
@@ -132,7 +275,7 @@ namespace YourProjectName.Services
                 if (GetUser(username, password, path))
                 {
                     _logger.LogInformation($"path1 = {path}"); //SHOW ROWCOUNT
-                    events.AddRange(GetEventsFromDatabase(path));
+                    events.AddRange(GetEventsFromDatabase(path,username));
                      
                 }
             }
@@ -175,7 +318,7 @@ namespace YourProjectName.Services
             return $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={databasePath};Jet OLEDB:Database Password=!wage*master?;";
         }
 
-        private List<Event> GetEventsFromDatabase(string databasePath)
+        private List<Event> GetEventsFromDatabase(string databasePath, string username)
         {
             List<Event> events = new List<Event>();
             try
@@ -186,10 +329,11 @@ namespace YourProjectName.Services
                     
                     connection.Open();
 
-                    string query = "SELECT ID, REF_NUM, REF_NAME, REMINDER_TYPE, REMINDER_MSG, REF_DATE, REMINDER_DATE, COMPANY, DISMISS FROM API_REMINDERS WHERE SHOW = TRUE";
+                    string query = "SELECT ID, REF_NUM, REF_NAME, REMINDER_TYPE, REMINDER_MSG, REF_DATE, REMINDER_DATE, COMPANY, DISMISS, REF_ID, TASK_USER FROM API_REMINDERS WHERE SHOW = TRUE AND ((REMINDER_TYPE <> 'TASK') OR (REMINDER_TYPE = 'TASK' AND (TASK_USER = ? OR TASK_USER IS NULL)))";
+                    
                     using (OleDbCommand command = new OleDbCommand(query, connection))
                     {
-                        
+                        command.Parameters.AddWithValue("?", username);
                         using (OleDbDataReader reader = command.ExecuteReader())
                         {
                             try
@@ -209,7 +353,9 @@ namespace YourProjectName.Services
                                         ReminderDate = DateTime.Parse(reader["REMINDER_DATE"].ToString()),
                                         Company = reader["COMPANY"].ToString(),
                                         DatabasePath = databasePath,
-                                        Dismissed = (bool)reader["DISMISS"]
+                                        Dismissed = (bool)reader["DISMISS"],
+                                        Ref_ID = reader["REF_ID"] == DBNull.Value ? (int?)null : (int)reader["REF_ID"],
+                                       
                                     };
                                     events.Add(e);
                                 }

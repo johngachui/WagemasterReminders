@@ -12,5 +12,7 @@
         public string? DatabasePath { get; set; }
         public string? Company { get; set; }
         public bool Dismissed { get; set; }
+        public int? Ref_ID { get; set; }
+        
     }
 }
