@@ -33,6 +33,8 @@ var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--console")
 
 // Add services to the container.
 builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+builder.Services.AddSingleton<IReminderService, ReminderService>();
+builder.Services.AddSingleton<ITaskService, TaskService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
