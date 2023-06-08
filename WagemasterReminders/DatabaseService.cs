@@ -23,7 +23,7 @@ namespace YourProjectName.Services
 
     public interface ITaskService
     {
-        void CreateRepeatingTasks(string databasePath, OleDbConnection connection);
+        void CreateRepeatingTasks(string databasePath, string connectionstr);
     }
     public interface IReminderService
     {
@@ -175,9 +175,9 @@ namespace YourProjectName.Services
             {
                 if (GetUser(username, password, path))
                 {
-                    _logger.LogInformation($"path1 = {path}"); //SHOW ROWCOUNT
+                    _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
                     events.AddRange(GetEventsFromDatabase(path,username));
-                     
+                    _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
                 }
             }
             return events;
@@ -232,6 +232,7 @@ namespace YourProjectName.Services
                     
                     using (OleDbCommand command = new OleDbCommand(query, connection))
                     {
+                        _logger.LogInformation($"X1 username = {username}");
                         command.Parameters.AddWithValue("?", username);
                         using (OleDbDataReader reader = command.ExecuteReader())
                         {
@@ -262,8 +263,7 @@ namespace YourProjectName.Services
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine(ex.Message);
-                                _logger.LogError(ex.Message);
+                                _logger.LogInformation($"Log2a: {ex.Message}");
                             }
                         }
                     }
@@ -272,7 +272,7 @@ namespace YourProjectName.Services
             catch (Exception ex)
             {
                 // Log the error
-                _logger.LogInformation($"Log2: {ex.Message}");
+                _logger.LogInformation($"Log2b: {ex.Message}");
             }
             return events;
         }
