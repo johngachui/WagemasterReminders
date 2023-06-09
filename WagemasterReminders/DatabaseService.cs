@@ -17,8 +17,8 @@ namespace YourProjectName.Services
 
         bool UpdateEvent(int id, bool dismissed, string username, string databasePath, string password, int? ref_id, string reminderType);
 
-        //bool UpdateReminders(string databasePath, string username, string password);
-       
+        List<LeaveBals> GetLeaveBals(string num,string companypath);
+        bool AuthEmp(string num, string databasePath);
     }
 
     public interface ITaskService
@@ -87,6 +87,52 @@ namespace YourProjectName.Services
 
         }
 
+        public bool AuthEmp(string num, string databasePath)
+
+        {
+            try
+            {
+                _logger.LogInformation($"databasePath = {databasePath}"); //SHOW ROWCOUNT 
+                string connectionString = GetConnectionString(databasePath);
+                using (OleDbConnection connection = new OleDbConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Check if the leave API function is licensed
+                    string countQuery = "SELECT COMPANY_FILES.ELM_API_KEY FROM COMPANY_FILES WHERE (((COMPANY_FILES.LAST)=True) AND ((COMPANY_FILES.ELM_API_KEY)>''));";
+                    using (OleDbCommand countCommand = new OleDbCommand(countQuery, connection))
+                    {
+                        string elm_api_key = (string)countCommand.ExecuteScalar();
+                        _logger.LogInformation($"rowCountELM = {elm_api_key}"); //SHOW ROWCOUNT                                        
+                        if (!string.IsNullOrEmpty(elm_api_key))
+                        {
+                            _logger.LogInformation($"return_elm1 = true"); //SHOW ROWCOUNT 
+                            return true;  // Return true if the PASSWORDS table is empty
+                        }
+                    }
+
+                    // Query to find a user with the provided username and SHOW_REMINDERS permission
+                    string userQuery = "SELECT [NUM] FROM HR_MASTER WHERE [NUM]=@num";
+                    using (OleDbCommand userCommand = new OleDbCommand(userQuery, connection))
+                    {
+                        userCommand.Parameters.AddWithValue("@num", num);
+                        
+                        object result = userCommand.ExecuteScalar();
+                        if (result != null)
+                        {
+                            return Convert.ToBoolean(result);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                _logger.LogInformation($"AuthEmp error: {ex.Message}");
+            }
+            return false;  // Return false if user was not found or if user does not have SHOW_REMINDERS permission
+
+        }
 
         public bool UpdateEvent(int id, bool dismissed, string databasePath, string username, string password, int? ref_id, string reminderType)
         {
@@ -183,6 +229,28 @@ namespace YourProjectName.Services
             return events;
         }
 
+        public List<LeaveBals> GetLeaveBals(string num,string companypath)
+        {
+            // Read the INI file to get the database paths
+            List<string> databasePaths = ReadIniFile();
+            List<LeaveBals> leavebals = new List<LeaveBals>();
+
+            // Loop through each database path and fetch event data
+            foreach (string path in databasePaths)
+            {
+                if (path == companypath)
+                {
+                    if (AuthEmp(num, path))
+                    {
+                        _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
+                        leavebals.AddRange(GetLeaveBalsFromDatabase(path, num));
+                        _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
+                    }
+                }
+            }
+            return leavebals;
+        }
+
         private List<string> ReadIniFile()
         {
             // Construct the INI file path
@@ -275,6 +343,71 @@ namespace YourProjectName.Services
                 _logger.LogInformation($"Log2b: {ex.Message}");
             }
             return events;
+        }
+
+        private List<LeaveBals> GetLeaveBalsFromDatabase(string databasePath, string num)
+        {
+            List<LeaveBals> leavebals = new List<LeaveBals>();
+            try
+            {
+                string connectionString = DatabaseService.GetConnectionString(databasePath);
+                using (OleDbConnection connection = new OleDbConnection(connectionString))
+                {
+
+                    connection.Open();
+
+                    string query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE (((COMPANY_FILES.LAST)=True) AND ((MASTER.NUM)= ?));";
+
+                    using (OleDbCommand command = new OleDbCommand(query, connection))
+                    {
+                        _logger.LogInformation($"Y1 username = {num}");
+                        command.Parameters.AddWithValue("?", num);
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            try
+                            {
+                                _logger.LogInformation($"Y1");
+                                while (reader.Read())
+                                {
+
+                                    LeaveBals e = new LeaveBals
+                                    {
+                                        Num = reader["NUM"].ToString(),
+                                        EmpName = reader["NAME"].ToString(),
+                                        Annual_Bfwd = (decimal)reader["LEAVE_BFWD"],
+                                        Annual_Cfwd = (decimal)reader["LEAVE_CFWD"],
+                                        Maternity_Bfwd = (decimal)reader["MATERNITY_BFWD"],
+                                        Maternity_Cfwd = (decimal)reader["MATERNITY_CFWD"],
+                                        Paternity_Bfwd = (decimal)reader["PATERNITY_BFWD"],
+                                        Paternity_Cfwd = (decimal)reader["PATERNITY_CFWD"],
+                                        Full_Sick_Bal = (decimal)reader["FULL_DAYS_CFWD"],
+                                        Half_Sick_Bal = (decimal)reader["HALF_DAYS_CFWD"],
+                                        Earned = (decimal)reader["THIS_MONTH"],
+                                        Taken = (decimal)reader["TAKEN"],
+                                        Sold = (decimal)reader["SOLD"],
+                                        Adjustment = (decimal)reader["LEAVE_ADJUST"],
+                                        Absence = (decimal)reader["LEAVE_ABSENCE"],
+                                        DatabasePath = databasePath,
+
+                                    };
+                                    leavebals.Add(e);
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogInformation($"Log3a: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                _logger.LogInformation($"Log3b: {ex.Message}");
+            }
+            return leavebals;
         }
     }
 }

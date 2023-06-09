@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+//using WagemasterAPI.Models;
 using YourProjectName.Models;
 using YourProjectName.Services;
 
@@ -18,7 +19,7 @@ namespace YourProjectName.Controllers
         }
 
         
-        // POST: api/Events
+        // POST: api/Events - Events
         [HttpPost]
         public ActionResult<IEnumerable<Event>> GetEvents([FromBody] UserLogin userLogin)
         {
@@ -35,6 +36,19 @@ namespace YourProjectName.Controllers
             return Ok(events);
         }
 
+        // POST: api/Events - LeaveBals
+        [HttpPost("leavebals")]
+        public ActionResult<IEnumerable<LeaveBals>> GetLeaveBals([FromBody] LeaveEmployee leaveEmployee)
+        {
+            // Here, GetLeaveBals reads multiple database paths from INI file and checks each of them for the user.
+            var leavebals = _databaseService.GetLeaveBals(leaveEmployee.Num,leaveEmployee.CompanyPath);
+            if (leavebals == null || leavebals.Count == 0)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(leavebals);
+        }
 
 
         [HttpPost("update/{id}")]
