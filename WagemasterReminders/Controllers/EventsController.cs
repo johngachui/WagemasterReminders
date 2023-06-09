@@ -7,12 +7,12 @@ namespace YourProjectName.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EventsController : ControllerBase
+    public class WagemasterController : ControllerBase
     {
         private readonly IDatabaseService _databaseService;
         private readonly IReminderService _reminderService;
 
-        public EventsController(IDatabaseService databaseService, IReminderService reminderService)
+        public WagemasterController(IDatabaseService databaseService, IReminderService reminderService)
         {
             _databaseService = databaseService;
             _reminderService = reminderService;
@@ -20,7 +20,7 @@ namespace YourProjectName.Controllers
 
         
         // POST: api/Events - Events
-        [HttpPost]
+        [HttpPost("events")]
         public ActionResult<IEnumerable<Event>> GetEvents([FromBody] UserLogin userLogin)
         {
             //Refresh repeating records in TASKS then the API REMINDERS table
@@ -51,7 +51,7 @@ namespace YourProjectName.Controllers
         }
 
 
-        [HttpPost("update/{id}")]
+        [HttpPost("events/update/{id}")]
         public ActionResult UpdateEvent(int id, [FromBody] UpdateEventRequest request)
         {
             
