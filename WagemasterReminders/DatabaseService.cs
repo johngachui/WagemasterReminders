@@ -111,16 +111,19 @@ namespace YourProjectName.Services
                         }
                     }
 
-                    // Query to find a user with the provided username and SHOW_REMINDERS permission
-                    string userQuery = "SELECT [NUM] FROM HR_MASTER WHERE [NUM]=@num";
-                    using (OleDbCommand userCommand = new OleDbCommand(userQuery, connection))
+                    if (num != "*")
                     {
-                        userCommand.Parameters.AddWithValue("@num", num);
-                        
-                        object result = userCommand.ExecuteScalar();
-                        if (result != null)
+                        // Query to find a user with the provided username and SHOW_REMINDERS permission
+                        string userQuery = "SELECT [NUM] FROM HR_MASTER WHERE [NUM]=@num";
+                        using (OleDbCommand userCommand = new OleDbCommand(userQuery, connection))
                         {
-                            return Convert.ToBoolean(result);
+                            userCommand.Parameters.AddWithValue("@num", num);
+
+                            object result = userCommand.ExecuteScalar();
+                            if (result != null)
+                            {
+                                return Convert.ToBoolean(result);
+                            }
                         }
                     }
                 }
@@ -355,13 +358,60 @@ namespace YourProjectName.Services
                 {
 
                     connection.Open();
+                    string query = "";
+                    int query_type = 0;
+                    string num_start = "";
+                    string num_stop = "";
+                    if (num.StartsWith ("*"))
+                    {
+                        if (num.Length == 1)
+                        {
+                            query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True;";
+                            query_type = 1;
+                        }
+                        else
+                        {
+                            int startIndex = num.IndexOf('*');
+                            int midIndex = num.IndexOf('~');
+                            if (startIndex != -1 && midIndex != -1 && startIndex < midIndex)
+                            {
+                                
+                                num_start = num.Substring(startIndex + 1, midIndex - startIndex - 1);
+                                _logger.LogInformation($"num_start = {num_start}");
 
-                    string query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE (((COMPANY_FILES.LAST)=True) AND ((MASTER.NUM)= ?));";
+                                int stopIndex = num.IndexOf('~');
+                                if (stopIndex != -1)
+                                {
+                                    num_stop = num.Substring(stopIndex + 1);
+                                    query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True AND (MASTER.NUM >= ? AND MASTER.NUM <= ?) ORDER BY MASTER.NUM;";
+                                    query_type = 2;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE (((COMPANY_FILES.LAST)=True) AND ((MASTER.NUM) LIKE ?));";
+                        query_type = 3;
+                    }
+                    
+                    if (query_type == 0) { return leavebals; } //incorrect parameter
 
                     using (OleDbCommand command = new OleDbCommand(query, connection))
                     {
                         _logger.LogInformation($"Y1 username = {num}");
-                        command.Parameters.AddWithValue("?", num);
+                        switch (query_type)
+                        {
+                            case 2:
+                                command.Parameters.AddWithValue("?", num_start);
+                                command.Parameters.AddWithValue("?", num_stop);
+                                break;
+                            case 3:
+                                command.Parameters.AddWithValue("?", num);
+                                break;
+                            default:
+                                break;
+                        }
                         using (OleDbDataReader reader = command.ExecuteReader())
                         {
                             try

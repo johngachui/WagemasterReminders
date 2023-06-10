@@ -50,7 +50,7 @@ namespace YourProjectName.Controllers
             return Ok(leavebals);
         }
 
-
+        
         [HttpPost("events/update/{id}")]
         public ActionResult UpdateEvent(int id, [FromBody] UpdateEventRequest request)
         {
