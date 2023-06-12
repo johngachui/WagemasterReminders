@@ -19,7 +19,7 @@ namespace YourProjectName.Controllers
         }
 
         
-        // POST: api/Events - Events
+        // POST: api/wagemaster/Events - Events
         [HttpPost("events")]
         public ActionResult<IEnumerable<Event>> GetEvents([FromBody] UserLogin userLogin)
         {
@@ -36,7 +36,18 @@ namespace YourProjectName.Controllers
             return Ok(events);
         }
 
-        // POST: api/Events - LeaveBals
+        // POST: api/wagemaster/Events/update/id - Events
+        [HttpPost("events/update/{id}")]
+        public ActionResult UpdateEvent(int id, [FromBody] UpdateEventRequest request)
+        {
+
+            if (!_databaseService.UpdateEvent(id, request.Dismissed, request.DatabasePath, request.Username, request.Password, request.Ref_ID, request.ReminderType))
+                return NotFound();
+
+            return Ok();
+        }
+
+        // POST: api/wagemaster/leavebals - LeaveBals
         [HttpPost("leavebals")]
         public ActionResult<IEnumerable<LeaveBals>> GetLeaveBals([FromBody] LeaveEmployee leaveEmployee)
         {
@@ -50,12 +61,26 @@ namespace YourProjectName.Controllers
             return Ok(leavebals);
         }
 
-        
-        [HttpPost("events/update/{id}")]
-        public ActionResult UpdateEvent(int id, [FromBody] UpdateEventRequest request)
+        // POST: api/wagemaster/leavedays - LeaveDays
+        [HttpPost("leavedays")]
+        public ActionResult<IEnumerable<LeaveDays>> GetLeaveDays([FromBody] LeaveEmployee leaveEmployee)
+        {
+            // Here, GetLeaveBals reads multiple database paths from INI file and checks each of them for the user.
+            var leavedays = _databaseService.GetLeaveDays(leaveEmployee.Num, leaveEmployee.CompanyPath);
+            if (leavedays == null || leavedays.Count == 0)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(leavedays);
+        }
+
+        // POST: api/wagemaster/leavedays/application - LeaveDays
+        [HttpPost("leavedays/application")]
+        public ActionResult CreateLeaveApplication([FromBody] LeaveApplications leaveappl)
         {
             
-            if (!_databaseService.UpdateEvent(id, request.Dismissed, request.DatabasePath, request.Username, request.Password,request.Ref_ID,request.ReminderType))
+            if (!_databaseService.CreateLeaveApplication(leaveappl.Num, leaveappl.StartDate, leaveappl.StopDate, leaveappl.LeaveType, leaveappl.DatabasePath))
                 return NotFound();
 
             return Ok();

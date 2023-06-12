@@ -18,7 +18,10 @@ namespace YourProjectName.Services
         bool UpdateEvent(int id, bool dismissed, string username, string databasePath, string password, int? ref_id, string reminderType);
 
         List<LeaveBals> GetLeaveBals(string num,string companypath);
-        bool AuthEmp(string num, string databasePath);
+        bool AuthEmp(string num, string databasePath, string called_from);
+        List<LeaveDays> GetLeaveDays(string num, string companypath);
+
+        bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string databasePath);
     }
 
     public interface ITaskService
@@ -87,7 +90,7 @@ namespace YourProjectName.Services
 
         }
 
-        public bool AuthEmp(string num, string databasePath)
+        public bool AuthEmp(string num, string databasePath, string called_from)
 
         {
             try
@@ -111,7 +114,7 @@ namespace YourProjectName.Services
                         }
                     }
 
-                    if (num != "*")
+                    if (!num.StartsWith("*") && called_from != "leaveapplication")
                     {
                         // Query to find a user with the provided username and SHOW_REMINDERS permission
                         string userQuery = "SELECT [NUM] FROM HR_MASTER WHERE [NUM]=@num";
@@ -243,7 +246,7 @@ namespace YourProjectName.Services
             {
                 if (path == companypath)
                 {
-                    if (AuthEmp(num, path))
+                    if (AuthEmp(num, path,"leavebals"))
                     {
                         _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
                         leavebals.AddRange(GetLeaveBalsFromDatabase(path, num));
@@ -253,7 +256,27 @@ namespace YourProjectName.Services
             }
             return leavebals;
         }
+        public List<LeaveDays> GetLeaveDays(string num, string companypath)
+        {
+            // Read the INI file to get the database paths
+            List<string> databasePaths = ReadIniFile();
+            List<LeaveDays> leavedays = new List<LeaveDays>();
 
+            // Loop through each database path and fetch event data
+            foreach (string path in databasePaths)
+            {
+                if (path == companypath)
+                {
+                    if (AuthEmp(num, path,"leavedays"))
+                    {
+                        _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
+                        leavedays.AddRange(GetLeaveDaysFromDatabase(path, num));
+                        _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
+                    }
+                }
+            }
+            return leavedays;
+        }
         private List<string> ReadIniFile()
         {
             // Construct the INI file path
@@ -366,7 +389,7 @@ namespace YourProjectName.Services
                     {
                         if (num.Length == 1)
                         {
-                            query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True;";
+                            query = "SELECT MASTER.NUM, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True;";
                             query_type = 1;
                         }
                         else
@@ -383,7 +406,7 @@ namespace YourProjectName.Services
                                 if (stopIndex != -1)
                                 {
                                     num_stop = num.Substring(stopIndex + 1);
-                                    query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True AND (MASTER.NUM >= ? AND MASTER.NUM <= ?) ORDER BY MASTER.NUM;";
+                                    query = "SELECT MASTER.NUM, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True AND (MASTER.NUM >= ? AND MASTER.NUM <= ?) ORDER BY MASTER.NUM;";
                                     query_type = 2;
                                 }
                             }
@@ -391,7 +414,7 @@ namespace YourProjectName.Services
                     }
                     else
                     {
-                        query = "SELECT MASTER.NUM, MASTER.[NAME], MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE (((COMPANY_FILES.LAST)=True) AND ((MASTER.NUM) LIKE ?));";
+                        query = "SELECT MASTER.NUM, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE (((COMPANY_FILES.LAST)=True) AND ((MASTER.NUM) LIKE ?));";
                         query_type = 3;
                     }
                     
@@ -423,7 +446,6 @@ namespace YourProjectName.Services
                                     LeaveBals e = new LeaveBals
                                     {
                                         Num = reader["NUM"].ToString(),
-                                        EmpName = reader["NAME"].ToString(),
                                         Annual_Bfwd = (decimal)reader["LEAVE_BFWD"],
                                         Annual_Cfwd = (decimal)reader["LEAVE_CFWD"],
                                         Maternity_Bfwd = (decimal)reader["MATERNITY_BFWD"],
@@ -458,6 +480,191 @@ namespace YourProjectName.Services
                 _logger.LogInformation($"Log3b: {ex.Message}");
             }
             return leavebals;
+        }
+
+        private List<LeaveDays> GetLeaveDaysFromDatabase(string databasePath, string num)
+        {
+            List<LeaveDays> leavedays = new List<LeaveDays>();
+            try
+            {
+                string connectionString = DatabaseService.GetConnectionString(databasePath);
+                using (OleDbConnection connection = new OleDbConnection(connectionString))
+                {
+
+                    connection.Open();
+                    string query = "";
+                    int query_type = 0;
+                    string num_start = "";
+                    string num_stop = "";
+                    if (num.StartsWith("*"))
+                    {
+                        if (num.Length == 1)
+                        {
+                            query = "SELECT [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
+                            query_type = 1;
+                        }
+                        else
+                        {
+                            int startIndex = num.IndexOf('*');
+                            int midIndex = num.IndexOf('~');
+                            if (startIndex != -1 && midIndex != -1 && startIndex < midIndex)
+                            {
+
+                                num_start = num.Substring(startIndex + 1, midIndex - startIndex - 1);
+                                _logger.LogInformation($"num_start = {num_start}");
+
+                                int stopIndex = num.IndexOf('~');
+                                if (stopIndex != -1)
+                                {
+                                    num_stop = num.Substring(stopIndex + 1);
+                                    query = "SELECT [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] WHERE ((([LEAVE DAYS TAKEN].NUM)>=[?] And ([LEAVE DAYS TAKEN].NUM)<=[?])) ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
+                                    query_type = 2;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        query = "SELECT [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] WHERE ((([LEAVE DAYS TAKEN].NUM) Like [?])) ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
+                        query_type = 3;
+                    }
+
+                    if (query_type == 0) { return leavedays; } //incorrect parameter
+
+                    using (OleDbCommand command = new OleDbCommand(query, connection))
+                    {
+                        _logger.LogInformation($"Z1 username = {num}");
+                        switch (query_type)
+                        {
+                            case 2:
+                                command.Parameters.AddWithValue("?", num_start);
+                                command.Parameters.AddWithValue("?", num_stop);
+                                break;
+                            case 3:
+                                command.Parameters.AddWithValue("?", num);
+                                break;
+                            default:
+                                break;
+                        }
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            try
+                            {
+                                _logger.LogInformation($"Z1");
+                                while (reader.Read())
+                                {
+                                    string startDateString = reader["START"].ToString();
+                                    DateTime? startDate;
+
+                                    if (string.IsNullOrWhiteSpace(startDateString))
+                                    {
+                                        startDate = null;
+                                    }
+                                    else
+                                    {
+                                        startDate = DateTime.Parse(startDateString);
+                                    }
+
+                                    string stopDateString = reader["STOP"].ToString();
+                                    DateTime? stopDate;
+
+                                    if (string.IsNullOrWhiteSpace(stopDateString))
+                                    {
+                                        stopDate = null;
+                                    }
+                                    else
+                                    {
+                                        stopDate = DateTime.Parse(stopDateString);
+                                    }
+
+                                    LeaveDays e = new LeaveDays
+                                    {
+                                        Num = reader["NUM"].ToString(),
+                                        StartDate = startDate,
+                                        StopDate = stopDate,
+                                        Days =(decimal)reader["DAYS"],
+                                        LeaveType = (string)reader["TYPE"],
+                                        Approved = (bool)reader["APPROVED"],
+                                        NotApproved = (bool)reader["NOT_APPROVED"],
+                                        Notified = (bool)reader["NOTIFIED"],
+                                        Taken = (bool)reader["TAKEN"],
+                                        RecalcNeeded = (bool)reader["RECALC_NEEDED"],
+                                        DatabasePath = databasePath,
+                                    };
+                                    leavedays.Add(e);
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogInformation($"Log4a: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                _logger.LogInformation($"Log4b: {ex.Message}");
+            }
+            return leavedays;
+        }
+
+        public bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string databasePath)
+        {
+            // Check if the user has permission to perform this operation
+            if (!AuthEmp(num, databasePath,"leaveapplications"))
+            {
+                _logger.LogInformation($"User {num} attempted to update event in database {databasePath}, but does not have necessary permissions");
+                return false;
+            }
+
+            //
+            int periodx = startdate.Month;
+            int yearx = startdate.Year;
+
+            // Proceed with the update operation if permission granted...
+            string connectionString = GetConnectionString(databasePath);
+            using (OleDbConnection connection = new OleDbConnection(connectionString))
+            {
+                bool recalc_needed = true;
+                string query = $"INSERT INTO [LEAVE DAYS TAKEN] (NUM, START, STOP, PERIOD, YEARX, [TYPE], RECALC_NEEDED) VALUES (num, startdate,stopdate,periodx,yearx,leavetype, recalc_needed)";
+
+                try
+                {
+                    connection.Open();
+                    using (OleDbCommand command = new OleDbCommand(query, connection))
+                    {
+                        
+                        // Add parameters to prevent SQL Injection
+                        command.Parameters.Add(new OleDbParameter("num", num));
+                        command.Parameters.Add(new OleDbParameter("startdate", startdate));
+                        command.Parameters.Add(new OleDbParameter("stopdate", stopdate));
+                        command.Parameters.Add(new OleDbParameter("periodx", periodx));
+                        command.Parameters.Add(new OleDbParameter("yearx", yearx));
+                        command.Parameters.Add(new OleDbParameter("leavetype", leavetype));
+                        command.Parameters.Add(new OleDbParameter("recalc_needed", recalc_needed));
+
+                        // Execute the query
+                        int rowsAffected = command.ExecuteNonQuery();
+
+                        if (rowsAffected == 0)
+                        {
+                            _logger.LogInformation($"No leave applications were made in database {databasePath}");
+                            return false;
+                        }
+                        
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogInformation($"Error in insert application query in database {databasePath}. Error: {ex.Message}");
+                    return false;
+                }
+
+            }
         }
     }
 }

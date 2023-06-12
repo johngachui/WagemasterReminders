@@ -2,8 +2,8 @@
 {
     public class LeaveBals
     {
+       
         public string? Num { get; set; }
-        public string? EmpName { get; set; }
         public decimal Annual_Bfwd { get; set; }
         public decimal Annual_Cfwd { get; set; }
         public decimal Maternity_Bfwd { get; set; }
@@ -19,5 +19,29 @@
         public decimal Absence { get; set; }
         public string? DatabasePath { get; set; }
 
+    }
+
+    public class LeaveDays
+    {
+        public string? Num { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? StopDate { get; set; }
+        public string? LeaveType { get; set; }
+        public decimal Days { get; set; }
+        public bool Approved { get; set; }
+        public bool NotApproved { get; set; }
+        public bool Notified { get; set; }
+        public bool Taken { get; set; }
+        public bool RecalcNeeded { get; set; }
+        public string? DatabasePath { get; set; }
+
+    }
+
+    public class HRMaster
+    {
+        public string? Num { get; set; }
+        public string? EmpName { get; set; }
+        public string? Email { get; set; }
+        public string? DatabasePath { get; set; }
     }
 }
