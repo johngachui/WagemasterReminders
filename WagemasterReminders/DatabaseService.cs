@@ -12,6 +12,7 @@ namespace YourProjectName.Services
 {
     public interface IDatabaseService
     {
+        List<string> ReadIniFile();
         List<Event> GetEvents(string username, string password);
         bool GetUser(string username, string password, string databasePath);
 
@@ -31,7 +32,8 @@ namespace YourProjectName.Services
     }
     public interface IReminderService
     {
-        bool UpdateReminders(string databasePath, string username, string password);
+        //bool UpdateReminders(string username, string password);
+        List<Event> UpdateReminders(string username, string password);
     }
     public class DatabaseService : IDatabaseService
     {
@@ -300,7 +302,7 @@ namespace YourProjectName.Services
             }
             return leavedays;
         }
-        private List<string> ReadIniFile()
+        public List<string> ReadIniFile()
         {
             // Construct the INI file path
             string iniPath = Path.Combine(

@@ -29,7 +29,25 @@ public class ReminderService : IReminderService
             return $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={databasePath};Jet OLEDB:Database Password=!wage*master?;";
         }
     }
-    public bool UpdateReminders(string databasePath, string username, string password)
+    public List<Event> UpdateReminders(string username, string password)
+    {
+        // Read the INI file to get the database paths
+        List<string> databasePaths = _databaseService.ReadIniFile();
+        List<Event> events = new List<Event>();
+
+        // Loop through each database path and fetch event data
+        foreach (string path in databasePaths)
+        {
+            if (!_databaseService.GetUser(username, password, path))
+            {
+                _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
+                bool updated = GetLatestReminders(path, username, password);
+                _logger.LogInformation($"path2 = Updated Reminders = {updated}"); //SHOW ROWCOUNT 
+            }
+        }
+        return events;
+    }
+    private bool GetLatestReminders(string databasePath, string username, string password)
     {
         // Check if the user has permission to perform this operation
         if (!_databaseService.GetUser(username, password, databasePath))
@@ -186,11 +204,6 @@ public class ReminderService : IReminderService
                     _logger.LogInformation("Error executing DOCUMENT insert query: " + ex.Message);
                 }
             }
-
-
-
-
-
 
             //AFTER ALL UPDATES MARK REMINDERS AS SHOW IF REMINDERS ARE GLOBALLY ALLOWED
             string shortName = "";

@@ -24,7 +24,7 @@ namespace YourProjectName.Controllers
         public ActionResult<IEnumerable<Event>> GetEvents([FromBody] UserLogin userLogin)
         {
             //Refresh repeating records in TASKS then the API REMINDERS table
-            _ = _reminderService.UpdateReminders(userLogin.DatabasePath, userLogin.Username, userLogin.Password);
+            _ = _reminderService.UpdateReminders(userLogin.Username, userLogin.Password);
             
             // Here, GetEvents reads multiple database paths from INI file and checks each of them for the user.
             var events = _databaseService.GetEvents(userLogin.Username, userLogin.Password);
