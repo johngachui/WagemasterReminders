@@ -37,11 +37,5 @@
 
     }
 
-    public class HRMaster
-    {
-        public string? Num { get; set; }
-        public string? EmpName { get; set; }
-        public string? Email { get; set; }
-        public string? DatabasePath { get; set; }
-    }
+    
 }

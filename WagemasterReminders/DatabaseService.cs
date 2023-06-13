@@ -21,6 +21,7 @@ namespace YourProjectName.Services
         bool AuthEmp(string num, string databasePath, string called_from);
         List<LeaveDays> GetLeaveDays(string num, string companypath);
 
+        List<HR_Master> GetHRMaster(string num, string companypath);
         bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string databasePath);
     }
 
@@ -255,6 +256,28 @@ namespace YourProjectName.Services
                 }
             }
             return leavebals;
+        }
+
+        public List<HR_Master> GetHRMaster(string num, string companypath)
+        {
+            // Read the INI file to get the database paths
+            List<string> databasePaths = ReadIniFile();
+            List<HR_Master> hrmasteremps = new List<HR_Master>();
+
+            // Loop through each database path and fetch event data
+            foreach (string path in databasePaths)
+            {
+                if (path == companypath)
+                {
+                    if (AuthEmp(num, path, "hrmaster"))
+                    {
+                        _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT
+                        hrmasteremps.AddRange(GetHRMasterFromDatabase(num, companypath));
+                        _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT 
+                    }
+                }
+            }
+            return hrmasteremps;
         }
         public List<LeaveDays> GetLeaveDays(string num, string companypath)
         {
@@ -665,6 +688,107 @@ namespace YourProjectName.Services
                 }
 
             }
+        }
+
+        private List<HR_Master> GetHRMasterFromDatabase(string num, string databasePath)
+        {
+            List<HR_Master> hrmasteremps = new List<HR_Master>();
+            try
+            {
+                string connectionString = DatabaseService.GetConnectionString(databasePath);
+                using (OleDbConnection connection = new OleDbConnection(connectionString))
+                {
+
+                    connection.Open();
+                    string query = "";
+                    int query_type = 0;
+                    string num_start = "";
+                    string num_stop = "";
+                    if (num.StartsWith("*"))
+                    {
+                        if (num.Length == 1)
+                        {
+                            query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED FROM HR_MASTER ORDER BY HR_MASTER.NUM;";
+                            query_type = 1;
+                        }
+                        else
+                        {
+                            int startIndex = num.IndexOf('*');
+                            int midIndex = num.IndexOf('~');
+                            if (startIndex != -1 && midIndex != -1 && startIndex < midIndex)
+                            {
+
+                                num_start = num.Substring(startIndex + 1, midIndex - startIndex - 1);
+                                _logger.LogInformation($"num_start = {num_start}");
+
+                                int stopIndex = num.IndexOf('~');
+                                if (stopIndex != -1)
+                                {
+                                    num_stop = num.Substring(stopIndex + 1);
+                                    query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED FROM HR_MASTER WHERE (HR_MASTER.NUM >= ? AND HR_MASTER.NUM <= ?) ORDER BY HR_MASTER.NUM;";
+                                    query_type = 2;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED FROM HR_MASTER WHERE HR_MASTER.NUM LIKE ?;";
+                        query_type = 3;
+                    }
+
+                    if (query_type == 0) { return hrmasteremps; } //incorrect parameter
+
+                    using (OleDbCommand command = new OleDbCommand(query, connection))
+                    {
+                        _logger.LogInformation($"Y1 username = {num}");
+                        switch (query_type)
+                        {
+                            case 2:
+                                command.Parameters.AddWithValue("?", num_start);
+                                command.Parameters.AddWithValue("?", num_stop);
+                                break;
+                            case 3:
+                                command.Parameters.AddWithValue("?", num);
+                                break;
+                            default:
+                                break;
+                        }
+                        using (OleDbDataReader reader = command.ExecuteReader())
+                        {
+                            try
+                            {
+                                _logger.LogInformation($"Y1");
+                                while (reader.Read())
+                                {
+
+                                    HR_Master e = new HR_Master
+                                    {
+                                        Num = reader["NUM"].ToString(),
+                                        EmpName = reader["NAME"].ToString(),
+                                        Email = reader["EMAIL"].ToString(),
+                                        Employed = (bool)reader["EMPLOYED"],
+                                        DatabasePath = databasePath,
+
+                                    };
+                                    hrmasteremps.Add(e);
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogInformation($"Log3a: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error
+                _logger.LogInformation($"Log3b: {ex.Message}");
+            }
+            return hrmasteremps;
         }
     }
 }

@@ -86,6 +86,22 @@ namespace YourProjectName.Controllers
             return Ok();
         }
 
+        // POST: api/wagemaster/hrmaster - hrmaster
+        [HttpPost("hrmaster")]
+        public ActionResult<IEnumerable<HR_Master>> GetHRMaster([FromBody] HREmployee employee)
+        {
+            // Here, GetLeaveBals reads multiple database paths from INI file and checks each of them for the user.
+            var hrmasteremps = _databaseService.GetHRMaster(employee.Num,employee.CompanyPath);
+            if (hrmasteremps == null || hrmasteremps.Count == 0)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(hrmasteremps);
+        }
+
+
+
 
     }
 
