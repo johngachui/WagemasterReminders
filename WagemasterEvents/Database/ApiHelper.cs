@@ -20,8 +20,8 @@ namespace WagemasterEvents.Database
 
             try
             {
-                string url = $"http://{server}:7080/api/Events";
-                //Debug.WriteLine($"Fetching events from {url}");
+                string url = $"http://{server}:7080/api/wagemaster/Events";
+                Debug.WriteLine($"Fetching events from {url}");
 
                 // Creating user
                 var user = new Userx
@@ -41,6 +41,7 @@ namespace WagemasterEvents.Database
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
 
+               
                 // Deserializing response to a list of events
                 eventsList = JsonSerializer.Deserialize<List<Event>>(responseBody);
                 //Debug.WriteLine($"Fetched {eventsList.Count} events from API");
@@ -48,6 +49,7 @@ namespace WagemasterEvents.Database
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error fetching events from API: {ex.Message}");
+                Debug.WriteLine($"Exception details: {ex.ToString()}");
             }
 
             return eventsList;
@@ -58,7 +60,7 @@ namespace WagemasterEvents.Database
         {
             try
             {
-                string url = $"http://{server}:7080/api/Events/update/{eventToUpdate.ID}";
+                string url = $"http://{server}:7080/api/wagemaster/events/update/{eventToUpdate.ID}";
                 //Debug.WriteLine($"Updating event at {url}");
 
                 // Creating user
@@ -68,12 +70,14 @@ namespace WagemasterEvents.Database
                     Password = password
                 };
                 // Replace single backslash with double backslash in the DatabasePath
-                string updatedDatabasePath = eventToUpdate.DatabasePath; //.Replace("\\", "\\\\");
+                string updatedDatabasePath = eventToUpdate.DatabasePath;
                 // Prepare the event to be updated
                 var updatedEvent = new
                 {
                     DatabasePath = updatedDatabasePath,
-                    Dismissed = eventToUpdate.Dismissed
+                    Dismissed = eventToUpdate.Dismissed,
+                    Ref_ID = eventToUpdate.RefID,
+                    ReminderType = eventToUpdate.ReminderType
                     
                 };
 
@@ -83,15 +87,17 @@ namespace WagemasterEvents.Database
                     user.Username,
                     user.Password,
                     updatedEvent.Dismissed,
-                    updatedEvent.DatabasePath
+                    updatedEvent.DatabasePath,
+                    updatedEvent.Ref_ID,
+                    updatedEvent.ReminderType
                 };
 
-                //Debug.WriteLine($"Log UpdateEventAsync: username = {username} and password = {password} and eventToUpdate.ID = {eventToUpdate.ID} and eventToUpdate.Dismissed = {eventToUpdate.Dismissed} and updatedDatabasePath = {updatedDatabasePath}");
+                //Debug.WriteLine($"Log UpdateEventAsync: ID = {eventToUpdate.ID} and eventToUpdate.RefID = {eventToUpdate.RefID} and eventToUpdate.ReminderType = {eventToUpdate.ReminderType}");
                 try
                 {
                     // Serializing object to JSON
                     var json = JsonSerializer.Serialize(updateUserAndEvent);
-                    //Debug.WriteLine(json);
+                    Debug.WriteLine(json);
                     // Converting JSON to HttpContent
                     var data = new StringContent(json, Encoding.UTF8, "application/json");
                     //Debug.WriteLine($"Log3:{url} and {data}");

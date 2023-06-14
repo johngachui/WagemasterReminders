@@ -17,6 +17,7 @@ namespace WagemasterEvents.Models
         private string ?databasePath;
         private string ?company;
         private bool dismissed;
+        private int? refid;
 
         [JsonPropertyName("id")]
         public int ID
@@ -124,6 +125,17 @@ namespace WagemasterEvents.Models
             set
             {
                 dismissed = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [JsonPropertyName("ref_ID")]
+        public int? RefID
+        {
+            get { return refid; }
+            set
+            {
+                refid = value;
                 OnPropertyChanged();
             }
         }

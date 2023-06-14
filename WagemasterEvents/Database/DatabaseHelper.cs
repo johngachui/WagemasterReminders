@@ -25,7 +25,7 @@ namespace WagemasterEvents.Database
         }
         public static void InitializeDatabase()
         {
-            //Debug.WriteLine($"Database file path: {ConnectionString}");
+            Debug.WriteLine($"InitializeDatabase: {ConnectionString}");
             using (var connection = new SQLiteConnection(ConnectionString))
             {
                 connection.Open();
@@ -39,9 +39,9 @@ namespace WagemasterEvents.Database
 
                         if (!tableExists)
                         {
-                            //Debug.WriteLine($"Table  does not exist");
+                            Debug.WriteLine($"Table does not exist");
                             // Create the EventsList table
-                            var createTableSql = "CREATE TABLE EventsList (IDX INTEGER PRIMARY KEY AUTOINCREMENT,ID INTEGER,  Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER)";
+                            var createTableSql = "CREATE TABLE EventsList (IDX INTEGER PRIMARY KEY AUTOINCREMENT,ID INTEGER,  Company TEXT, ReminderType TEXT, Reminder TEXT, Refno TEXT, Refname TEXT, DueDate TEXT, DatabasePath TEXT, NextReminderDate TEXT, Dismissed INTEGER, RefID INTEGER)";
                             try
                             {
                                 connection.Execute(createTableSql);
@@ -57,6 +57,8 @@ namespace WagemasterEvents.Database
                             //    createTableCommand.ExecuteNonQuery();
                             // }
                         }
+                        else
+                        { Debug.WriteLine($"Table exists"); }
                     }
                 }
                 catch (Exception ex)

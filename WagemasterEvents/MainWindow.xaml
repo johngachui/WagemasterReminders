@@ -104,7 +104,7 @@
                             <TextBox Text="{Binding Company}" IsReadOnly="True" Grid.Column="1" Margin="10,0,0,0" />
 
                             <TextBlock Text="Reminder:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="1" Margin="5,0,0,0"/>
-                            <TextBox Text="{Binding Reminder}" IsReadOnly="True" Grid.Column="1" Margin="10,0,0,0" Grid.Row="1"/>
+                            <TextBox Text="{Binding Reminder}" Foreground="#ffdf00"  IsReadOnly="True" Grid.Column="1" Margin="10,0,0,0" Grid.Row="1"/>
 
                             <TextBlock Text="Staff no. :" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="2" Margin="5,0,0,0"/>
                             <TextBox Text="{Binding Refno}" IsReadOnly="True" Grid.Column="1"  Margin="10,0,0,0" Grid.Row="2"/>
@@ -119,7 +119,7 @@
                             <DatePicker SelectedDate="{Binding NextReminderDate}" Grid.Column="1" Margin="10,5,0,0"  SelectedDateFormat="Long" Grid.Row="5" BorderThickness ="2"/>
 
                             <TextBlock Text="Dismissed:" FontWeight="Bold" VerticalAlignment="Center" Grid.Row="6" Margin="5,0,0,0"/>
-                            <CheckBox IsChecked="{Binding Dismissed}" Grid.Column="1" Margin="10,3,0,0" Grid.Row="6"/>
+                            <CheckBox IsChecked="{Binding Dismissed}" Foreground="#ffdf00" Grid.Column="1" Margin="10,3,0,0" Grid.Row="6"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
