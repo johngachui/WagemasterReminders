@@ -19,6 +19,7 @@ namespace WagemasterEvents
             notifyIcon.DoubleClick += (s, args) => ShowMainWindow();
             notifyIcon.Icon = new System.Drawing.Icon("icon.ico");
             notifyIcon.Visible = true;
+            notifyIcon.Text = "Wagemaster Reminders v 1.0";
 
             CreateContextMenu();
 

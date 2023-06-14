@@ -86,7 +86,7 @@ var notifyIcon = new NotifyIcon
     Icon = new Icon(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "WagemasterAPI.ico")),
     //Icon = SystemIcons.Application,
     Visible = true,
-    Text = "Wagemaster API"
+    Text = "Wagemaster API v 1.0"
 };
 var contextMenuStrip = new ContextMenuStrip();
 var quitToolStripMenuItem = new ToolStripMenuItem("Quit");
