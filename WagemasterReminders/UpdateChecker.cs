@@ -10,12 +10,12 @@ namespace YourProjectName.Models
 {
     public class UpdateChecker
     {
-        private const string VersionCheckUrl = "https://digitalframeworksltd.com/WagemasterAPI/updates/version.json";
+        private const string VersionCheckUrl = "https://digitalframeworksltd.com/WagemasterAPI/version.json";
         private readonly string currentVersion;
 
         public UpdateChecker(string currentVersion)
         {
-            this.currentVersion = "1.0.0";
+            this.currentVersion = "1.0.1";
         }
 
         public async Task CheckForUpdatesAsync()

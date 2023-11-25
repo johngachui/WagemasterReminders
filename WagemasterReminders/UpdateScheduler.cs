@@ -1,18 +1,21 @@
 ﻿using System.Timers;
+
 namespace YourProjectName.Models
 {
     public class UpdateScheduler
     {
         private readonly System.Timers.Timer updateCheckTimer;
         private readonly UpdateChecker updateChecker;
+        private bool isFirstExecution = true;
 
-        public UpdateScheduler(string currentVersion, double interval)
+        public UpdateScheduler(string currentVersion)
         {
             updateChecker = new UpdateChecker(currentVersion);
 
-            updateCheckTimer = new System.Timers.Timer(interval);
+            // Set initial delay to 1 minute
+            updateCheckTimer = new System.Timers.Timer(60000);
             updateCheckTimer.Elapsed += OnUpdateCheckTimerElapsed;
-            updateCheckTimer.AutoReset = true;
+            updateCheckTimer.AutoReset = false; // Initially, don't auto-reset
         }
 
         private void OnUpdateCheckTimerElapsed(object? sender, ElapsedEventArgs e)
@@ -25,8 +28,16 @@ namespace YourProjectName.Models
                     Console.WriteLine("Error checking for updates: " + task.Exception);
                 }
             }, TaskContinuationOptions.OnlyOnFaulted);
-        }
 
+            if (isFirstExecution)
+            {
+                // After first execution, set interval to 10 hours and enable auto-reset
+                updateCheckTimer.Interval = 36000000; // 10 hours
+                updateCheckTimer.AutoReset = true;
+                isFirstExecution = false;
+                updateCheckTimer.Start(); // Restart the timer with the new interval
+            }
+        }
 
         public void Start()
         {
@@ -38,5 +49,4 @@ namespace YourProjectName.Models
             updateCheckTimer.Stop();
         }
     }
-
 }
