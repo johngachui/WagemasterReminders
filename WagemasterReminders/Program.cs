@@ -44,7 +44,7 @@ builder.Services.AddLogging();
 var app = builder.Build();
 
 // Initialize UpdateScheduler
-var updateScheduler = new UpdateScheduler("1.0.1"); //hours x 60 x 60000 Replace with your current version and desired interval
+var updateScheduler = new UpdateScheduler("1.0.0"); //Replace with your current version and desired interval
 
 
 // Configure the HTTP request pipeline.
@@ -92,7 +92,7 @@ var notifyIcon = new NotifyIcon
     Icon = new Icon(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, "WagemasterAPI.ico")),
     //Icon = SystemIcons.Application,
     Visible = true,
-    Text = "Wagemaster API v 1.0.1"
+    Text = "Wagemaster API v 1.0.0"
 };
 var contextMenuStrip = new ContextMenuStrip();
 var quitToolStripMenuItem = new ToolStripMenuItem("Quit");

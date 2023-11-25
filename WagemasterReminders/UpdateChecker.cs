@@ -15,7 +15,7 @@ namespace YourProjectName.Models
 
         public UpdateChecker(string currentVersion)
         {
-            this.currentVersion = "1.0.1";
+            this.currentVersion = "1.0.0";
         }
 
         public async Task CheckForUpdatesAsync()
@@ -23,39 +23,63 @@ namespace YourProjectName.Models
             using (var httpClient = new HttpClient())
             {
                 var response = await httpClient.GetStringAsync(VersionCheckUrl);
-                var updateInfo = JsonConvert.DeserializeObject<UpdateInfo>(response);
-
-                if (updateInfo != null && IsNewVersionAvailable(updateInfo.Version))
+                try
                 {
-                    string? latestVersion = updateInfo.Version;
-                    string? downloadUrl = updateInfo.Url;
-                    string? checksum = updateInfo.Checksum;
-
-                    // Logic to handle the available update
-                    Console.WriteLine("New version available: " + latestVersion);
-                    if (!string.IsNullOrEmpty(downloadUrl) && !string.IsNullOrEmpty(checksum))
+                    var updateInfo = JsonConvert.DeserializeObject<UpdateInfo>(response);
+                
+                    Debug.WriteLine("checking IsNewVersionAvailable");
+                    if (updateInfo != null && IsNewVersionAvailable(updateInfo.Version))
                     {
-                        // Call DownloadUpdateAsync here
-                        bool updateDownloaded = await DownloadUpdateAsync(downloadUrl, checksum);
-                        if (updateDownloaded)
+                        string? latestVersion = updateInfo.Version;
+                        string? downloadUrl = updateInfo.Url;
+                        string? checksum = updateInfo.Checksum;
+
+                        // Logic to handle the available update
+                        Debug.WriteLine("New version available: " + latestVersion);
+                        if (!string.IsNullOrEmpty(downloadUrl) && !string.IsNullOrEmpty(checksum))
                         {
-                            // Handle successful download and prompt for installation
-                            MessageBox.Show("Update completed successfully", "Update Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            // Prompt the user to confirm the download
+                            DialogResult dialogResult = MessageBox.Show(
+                                "A new version is available. It's a large file and may take some time to download. Do you want to start the download now?",
+                                "Update Available",
+                                MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Question);
+
+                            if (dialogResult == DialogResult.Yes)
+                            {
+                                // Call DownloadUpdateAsync here
+                                bool updateDownloaded = await DownloadUpdateAsync(downloadUrl, checksum);
+                                if (updateDownloaded)
+                                {
+                                    // Handle successful download and prompt for installation
+                                    MessageBox.Show("Update completed successfully", "Update Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                }
+                                else
+                                {
+                                    // Handle failed download
+                                    Console.WriteLine("Failed to download the update.");
+                                }
+                            }
+                            else
+                            {
+                                // User declined the download
+                                Console.WriteLine("User opted not to download the update at this time.");
+                            }
                         }
                         else
                         {
-                            // Handle failed download
-                            Console.WriteLine("Failed to download the update.");
+                            Console.WriteLine("Update information is incomplete.");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Update information is incomplete.");
+                        Console.WriteLine("No updates available.");
                     }
                 }
-                else
+                catch (Newtonsoft.Json.JsonReaderException ex)
                 {
-                    Console.WriteLine("No updates available.");
+                    Console.WriteLine("JSON parsing error: " + ex.Message);
+                    // Additional logging or error handling
                 }
             }
         }
