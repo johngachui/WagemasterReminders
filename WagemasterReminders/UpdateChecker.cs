@@ -38,6 +38,9 @@ namespace YourProjectName.Models
                         Debug.WriteLine("New version available: " + latestVersion);
                         if (!string.IsNullOrEmpty(downloadUrl) && !string.IsNullOrEmpty(checksum))
                         {
+                            
+                            // Play a system sound
+                            System.Media.SystemSounds.Beep.Play();
                             // Prompt the user to confirm the download
                             DialogResult dialogResult = MessageBox.Show(
                                 "A new version is available. It's a large file and may take some time to download. Do you want to start the download now?",
@@ -132,9 +135,18 @@ namespace YourProjectName.Models
                     if (dialogResult == DialogResult.Yes)
                     {
                         // Proceed with update
-                        // Save any unsaved work here
+                        string batchFilePath = Path.Combine(Path.GetTempPath(), "run_update.bat");
+                        File.WriteAllText(batchFilePath, "@echo off\ntimeout /t 5 /nobreak > NUL\nstart \"\" \"" + filePath + "\"");
+
+                        ProcessStartInfo startInfo = new ProcessStartInfo(batchFilePath)
+                        {
+                            UseShellExecute = true,
+                            Verb = "runas"
+                        };
+                        Process.Start(startInfo);
+
                         Application.Exit();
-                        Process.Start(filePath);
+
                         //Check if update was successful
                         string indicatorFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update_indicator.txt");
                         if (File.Exists(indicatorFilePath))
