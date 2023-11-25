@@ -61,6 +61,8 @@ namespace YourProjectName.Models
                                 {
                                     // Handle failed download
                                     Console.WriteLine("Failed to download the update.");
+                                    MessageBox.Show("Update failed to download", "Update unsuccessful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                                 }
                             }
                             else
