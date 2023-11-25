@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Builder;
 //Stop multiple loads
 
 using System.Threading;
+using YourProjectName.Models; // Add the namespace where UpdateScheduler is located
 
 bool createdNew;
 var mutex = new Mutex(true, "Wagemaster API", out createdNew);
@@ -41,6 +42,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddLogging();
 
 var app = builder.Build();
+
+// Initialize UpdateScheduler
+var updateScheduler = new UpdateScheduler("1.0.0", 120000); //hours x 60 x 60000 Replace with your current version and desired interval
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -71,6 +76,7 @@ var apiThread = new Thread(() =>
 {
     try
     {
+        updateScheduler.Start(); // Start the UpdateScheduler
         app.RunAsync(cts.Token);
     }
     catch (OperationCanceledException)
@@ -83,10 +89,10 @@ apiThread.Start();
 // Create the notify icon and add a context menu with a quit option
 var notifyIcon = new NotifyIcon
 {
-    Icon = new Icon(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "WagemasterAPI.ico")),
+    Icon = new Icon(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, "WagemasterAPI.ico")),
     //Icon = SystemIcons.Application,
     Visible = true,
-    Text = "Wagemaster API v 1.0"
+    Text = "Wagemaster API v 1.0.0"
 };
 var contextMenuStrip = new ContextMenuStrip();
 var quitToolStripMenuItem = new ToolStripMenuItem("Quit");
@@ -113,6 +119,7 @@ notifyIcon.MouseClick += (sender, args) =>
 // Attach a FormClosing event handler to dispose of the notify icon
 Application.ApplicationExit += (sender, args) =>
 {
+    updateScheduler.Stop(); // Stop the UpdateScheduler
     notifyIcon.Visible = false;
     notifyIcon.Dispose();
 };
