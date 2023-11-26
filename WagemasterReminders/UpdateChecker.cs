@@ -149,15 +149,6 @@ namespace YourProjectName.Models
 
                         Application.Exit();
 
-                        //Check if update was successful
-                        string indicatorFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update_indicator.txt");
-                        if (File.Exists(indicatorFilePath))
-                        {
-                            // Update was successful
-                            File.Delete(indicatorFilePath); // Clean up the indicator file
-                            File.Delete(filePath); // Delete the temporary installer file                                // Additional post-update logic
-                        }
-                        Process.Start("WagemasterAPI.exe");
                     }
 
                     return true;
