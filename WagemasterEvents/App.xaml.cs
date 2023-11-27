@@ -1,6 +1,14 @@
 ﻿using System.Windows;
 using System.Windows.Forms;
 using WagemasterEvents.Database;
+using System;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.IO;
+using System.Security.Cryptography;
+using static WagemasterEvents.App;
 
 namespace WagemasterEvents
 {
@@ -19,13 +27,112 @@ namespace WagemasterEvents
             notifyIcon.DoubleClick += (s, args) => ShowMainWindow();
             notifyIcon.Icon = new System.Drawing.Icon("icon.ico");
             notifyIcon.Visible = true;
-            notifyIcon.Text = "Wagemaster Reminders v 1.0";
+            notifyIcon.Text = "Wagemaster Reminders v 1.0.0";
 
             CreateContextMenu();
 
             LoadEventsFromApi();
+            // Call the asynchronous method without awaiting it
+            CheckForUpdatesAsync().ContinueWith(task =>
+            {
+                if (task.Exception != null)
+                {
+                    // Handle exceptions
+                    // You can log this exception or show a message to the user
+                }
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+        private async Task CheckForUpdatesAsync()
+        {
+            try
+            {
+                var currentVersion = new Version("1.0.0"); // Current version of the app
+                var updateInfo = await GetUpdateInfoAsync(); // Implement this method to get update info from your server
+
+                if (updateInfo != null)
+                {
+                    if (updateInfo.Version > currentVersion)
+                    {
+                        var result = System.Windows.MessageBox.Show("Update available. Do you want to update now?", "Update Available", MessageBoxButton.YesNo);
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            await UpdateApplication(updateInfo); // Implement this method to download and start the update installer
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions
+            }
         }
 
+        public class UpdateInfo
+        {
+            public Version? Version { get; set; }
+            public string? DownloadUrl { get; set; }
+            public string? Checksum { get; set; }
+        }
+
+        private async Task<UpdateInfo?> GetUpdateInfoAsync()
+        {
+            using (var client = new HttpClient())
+            {
+                string url = "https://digitalframeworksltd.com/WagemasterEvents/update.json";
+                var response = await client.GetStringAsync(url);
+                return JsonConvert.DeserializeObject<UpdateInfo>(response);
+            }
+        }
+
+        private async Task UpdateApplication(UpdateInfo updateInfo)
+        {
+            string tempPath = Path.GetTempPath();
+            string installerPath = Path.Combine(tempPath, "WagemasterEventsUpdate.exe");
+
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                using (var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await stream.CopyToAsync(fileStream);
+                }
+            }
+
+            // Verify checksum
+            if (VerifyChecksum(installerPath, updateInfo.Checksum))
+            {
+                Process.Start(installerPath);
+
+                // Close the current application
+                System.Windows.Application.Current.Shutdown();
+            }
+            else
+            {
+                // Handle invalid checksum: notify user, log error, etc.
+            }
+        }
+
+        private bool VerifyChecksum(string filePath, string? expectedChecksum)
+        {
+            if (expectedChecksum != null)
+            {
+                using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                {
+                    using (var stream = File.OpenRead(filePath))
+                    {
+                        var hash = sha256.ComputeHash(stream);
+                        string fileChecksum = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                        return fileChecksum == expectedChecksum.ToLowerInvariant();
+                    }
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
         private async void LoadEventsFromApi()
         {
             var apiHelper = new ApiHelper();
@@ -40,9 +147,29 @@ namespace WagemasterEvents
         {
             notifyIcon.ContextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
             notifyIcon.ContextMenuStrip.Items.Add("Show").Click += (s, e) => ShowMainWindow();
+            notifyIcon.ContextMenuStrip.Items.Add("Check for Updates").Click += CheckForUpdates_Click;
             notifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (s, e) => ExitApplication();
         }
 
+        private async void CheckForUpdates_Click(object? sender, EventArgs e)
+        {
+            // Implement the update check logic here
+            var updateInfo = await GetUpdateInfoAsync();
+            var currentVersion = new Version("1.0.0"); // current version number
+            if (updateInfo != null && updateInfo.Version > currentVersion) //System.Reflection.Assembly.GetExecutingAssembly().GetName().Version)
+            {
+                // New update available
+                var result = System.Windows.MessageBox.Show("An update is available. Would you like to update now?", "Update Available", MessageBoxButton.YesNo);
+                if (result == MessageBoxResult.Yes)
+                {
+                    await UpdateApplication(updateInfo);
+                }
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("You are using the latest version.", "No Updates Found");
+            }
+        }
         private void ShowMainWindow()
         {
             MainWindow.Show();
