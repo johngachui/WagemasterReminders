@@ -71,6 +71,7 @@ app.UseEndpoints(endpoints =>
 });
 
 // Start the API in a separate thread
+/*
 var cts = new CancellationTokenSource();
 var apiThread = new Thread(() =>
 {
@@ -85,6 +86,41 @@ var apiThread = new Thread(() =>
     }
 });
 apiThread.Start();
+*/
+
+// Start the API in a separate thread
+var apiCts = new CancellationTokenSource();
+var apiThread = new Thread(() =>
+{
+    try
+    {
+        app.RunAsync(apiCts.Token).Wait();
+    }
+    catch (OperationCanceledException)
+    {
+        // Handle cancellation
+    }
+});
+apiThread.Start();
+
+// Start the UpdateScheduler in a separate thread
+var schedulerCts = new CancellationTokenSource();
+var schedulerThread = new Thread(() =>
+{
+    try
+    {
+        updateScheduler.Start(); // Start the UpdateScheduler
+        while (!schedulerCts.Token.IsCancellationRequested)
+        {
+            Thread.Sleep(1000); // Adjust the sleep time as needed
+        }
+    }
+    catch (OperationCanceledException)
+    {
+        // Handle cancellation
+    }
+});
+schedulerThread.Start();
 
 // Create the notify icon and add a context menu with a quit option
 var notifyIcon = new NotifyIcon
@@ -99,8 +135,10 @@ var quitToolStripMenuItem = new ToolStripMenuItem("Quit");
 quitToolStripMenuItem.Click += (sender, args) =>
 {
     notifyIcon.Visible = false;
-    cts.Cancel();
+    apiCts.Cancel();
+    schedulerCts.Cancel();
     apiThread.Join();
+    schedulerThread.Join();
     Application.Exit();
 };
 contextMenuStrip.Items.Add(quitToolStripMenuItem);
@@ -122,8 +160,11 @@ Application.ApplicationExit += (sender, args) =>
     updateScheduler.Stop(); // Stop the UpdateScheduler
     notifyIcon.Visible = false;
     notifyIcon.Dispose();
+    schedulerCts.Cancel();
+    schedulerThread.Join();
 };
 
 Application.Run();
 // Wait for the API thread to finish
 apiThread.Join();
+schedulerThread.Join();

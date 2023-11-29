@@ -8,14 +8,14 @@ namespace WagemasterEvents.Models
     public class Event : INotifyPropertyChanged
     {
         private int id;
-        private string ?refno;
-        private string ?refname;
-        private string ?reminderType;
-        private string ?reminder;
+        private string? refno;
+        private string? refname;
+        private string? reminderType;
+        private string? reminder;
         private DateTime dueDate;
         private DateTime nextReminderDate;
-        private string ?databasePath;
-        private string ?company;
+        private string? databasePath;
+        private string? company;
         private bool dismissed;
         private int? refid;
 
@@ -121,7 +121,7 @@ namespace WagemasterEvents.Models
         [JsonPropertyName("dismissed")]
         public bool Dismissed
         {
-            get { return dismissed; }
+            get { return dismissed ; }
             set
             {
                 dismissed = value;

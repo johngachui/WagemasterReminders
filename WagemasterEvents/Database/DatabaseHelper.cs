@@ -19,7 +19,7 @@ namespace WagemasterEvents.Database
                 // Ensure the directory exists
                 Directory.CreateDirectory(databaseFolderPath);
                 string databaseFilePath = Path.Combine(databaseFolderPath, "WagemasterEvents.db");
-
+                Debug.WriteLine($"Database File Path :{databaseFilePath}" );
                 return $"Data Source={databaseFilePath};";
             }
         }

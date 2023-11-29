@@ -32,13 +32,15 @@ namespace WagemasterEvents
             CreateContextMenu();
 
             LoadEventsFromApi();
+            //await CheckForUpdatesAsync();
             // Call the asynchronous method without awaiting it
             CheckForUpdatesAsync().ContinueWith(task =>
             {
-                if (task.Exception != null)
+               if (task.Exception != null)
                 {
                     // Handle exceptions
                     // You can log this exception or show a message to the user
+                    Debug.WriteLine($"task.Exception : {task.Exception}");
                 }
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
@@ -63,7 +65,7 @@ namespace WagemasterEvents
             }
             catch (Exception ex)
             {
-                // Handle exceptions
+                Debug.WriteLine($"task.Exception : {ex.Message}");
             }
         }
 
@@ -135,12 +137,20 @@ namespace WagemasterEvents
         }
         private async void LoadEventsFromApi()
         {
-            var apiHelper = new ApiHelper();
-            var server = SettingsRepository.GetSettings().Server;
-            var username = SettingsRepository.GetSettings().Username;
-            var password = SettingsRepository.GetSettings().Password;
-            var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server,username,password);
-            EventsRepository.SaveEvents(fetchedEvents);
+            try
+            {
+                var apiHelper = new ApiHelper();
+                var server = SettingsRepository.GetSettings().Server;
+                var username = SettingsRepository.GetSettings().Username;
+                var password = SettingsRepository.GetSettings().Password;
+                
+                var fetchedEvents = await apiHelper.FetchEventsFromApiAsync(server, username, password);
+                EventsRepository.SaveEvents(fetchedEvents);
+            }
+            catch (Exception ex) 
+            { 
+                Debug.WriteLine($"LoadEventsFromApi error : {ex.Message}"); 
+            }
         }
 
         private void CreateContextMenu()

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Linq;
 using Dapper;
 using WagemasterEvents.Models;
@@ -19,19 +20,28 @@ namespace WagemasterEvents.Database
             }
         }
 
-        
-        public static void SaveEvents(IEnumerable<Event>? events)
+
+        public static void SaveEvents(IEnumerable<Event> events)
         {
             using (IDbConnection connection = new SQLiteConnection(DatabaseHelper.ConnectionString))
             {
+
                 foreach (var eventItem in events)
                 {
-                    var existingEvent = connection.Query<Event>("SELECT * FROM EventsList WHERE Company = @Company AND ReminderType = @ReminderType AND Reminder = @Reminder AND DueDate = @DueDate AND Refno = @RefNo AND DatabasePath = @DatabasePath AND Refname = @RefName", eventItem).FirstOrDefault();
-
-                    if (existingEvent == null)
+                    try
                     {
-                        connection.Execute("INSERT INTO EventsList (ID, Company, ReminderType, Reminder, DueDate, NextReminderDate, Refno, DatabasePath, Refname, Dismissed,RefID) VALUES (@id, @Company, @ReminderType, @Reminder, @DueDate, @NextReminderDate, @RefNo, @DatabasePath, @RefName,@Dismissed, @RefID)", eventItem);
+                        
+
+                        var existingEvent = connection.Query<Event>("SELECT * FROM EventsList WHERE Company = @Company AND ReminderType = @ReminderType AND Reminder = @Reminder AND DueDate = @DueDate AND Refno = @Refno AND DatabasePath = @DatabasePath AND Refname = @Refname", eventItem).FirstOrDefault();
+
+                        //Debug.WriteLine($"existingEvent Error : {eventItem.ID}");
+
+                        if (existingEvent == null)
+                        {
+                            connection.Execute("INSERT INTO EventsList (ID, Company, ReminderType, Reminder, DueDate, NextReminderDate, Refno, DatabasePath, Refname, Dismissed,RefID) VALUES (@ID, @Company, @ReminderType, @Reminder, @DueDate, @NextReminderDate, @Refno, @DatabasePath, @Refname,@Dismissed, @RefID)", eventItem);
+                        }
                     }
+                    catch (Exception ex) { Debug.WriteLine($"SaveEvents Error : {ex.Message} {ex.ToString()}"); }
                 }
             }
         }

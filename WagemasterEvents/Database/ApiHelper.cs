@@ -44,7 +44,7 @@ namespace WagemasterEvents.Database
                
                 // Deserializing response to a list of events
                 eventsList = JsonSerializer.Deserialize<List<Event>>(responseBody);
-                //Debug.WriteLine($"Fetched {eventsList.Count} events from API");
+                Debug.WriteLine($"Fetched {eventsList.Count} events from API");
             }
             catch (Exception ex)
             {
