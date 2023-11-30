@@ -45,7 +45,8 @@ var app = builder.Build();
 
 // Initialize UpdateScheduler
 var updateScheduler = new UpdateScheduler("1.0.0"); //Replace with your current version and desired interval
-
+// Instantiate UpdateChecker for context menu
+var updateChecker = new UpdateChecker("1.0.0"); // Replace "1.0.0" with the current version of your application
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -69,24 +70,6 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
 });
-
-// Start the API in a separate thread
-/*
-var cts = new CancellationTokenSource();
-var apiThread = new Thread(() =>
-{
-    try
-    {
-        updateScheduler.Start(); // Start the UpdateScheduler
-        app.RunAsync(cts.Token);
-    }
-    catch (OperationCanceledException)
-    {
-        // Ignore the exception
-    }
-});
-apiThread.Start();
-*/
 
 // Start the API in a separate thread
 var apiCts = new CancellationTokenSource();
@@ -122,6 +105,7 @@ var schedulerThread = new Thread(() =>
 });
 schedulerThread.Start();
 
+
 // Create the notify icon and add a context menu with a quit option
 var notifyIcon = new NotifyIcon
 {
@@ -131,6 +115,16 @@ var notifyIcon = new NotifyIcon
     Text = "Wagemaster API v 1.0.0"
 };
 var contextMenuStrip = new ContextMenuStrip();
+// Add 'Check for Update' menu item
+var checkForUpdateToolStripMenuItem = new ToolStripMenuItem("Check for Update");
+checkForUpdateToolStripMenuItem.Click += async (sender, args) =>
+{
+    // Call the method to check for updates
+    await updateChecker.CheckForUpdatesAsync();
+};
+contextMenuStrip.Items.Add(checkForUpdateToolStripMenuItem);
+
+// Add 'Quit' menu item
 var quitToolStripMenuItem = new ToolStripMenuItem("Quit");
 quitToolStripMenuItem.Click += (sender, args) =>
 {
