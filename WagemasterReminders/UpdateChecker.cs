@@ -44,7 +44,7 @@ namespace YourProjectName.Models
                             // Prompt the user to confirm the download
                             DialogResult dialogResult = MessageBox.Show(
                                 "A new version is available. It's a large file and may take some time to download. Do you want to start the download now?",
-                                "Update Available",
+                                "Wagemaster API - Update Available",
                                 MessageBoxButtons.YesNo,
                                 MessageBoxIcon.Question);
 
@@ -55,13 +55,13 @@ namespace YourProjectName.Models
                                 if (updateDownloaded)
                                 {
                                     // Handle successful download and prompt for installation
-                                    MessageBox.Show("Update completed successfully", "Update Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    MessageBox.Show("Update completed successfully", "Wagemaster API - Update Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 }
                                 else
                                 {
                                     // Handle failed download
                                     Console.WriteLine("Failed to download the update.");
-                                    MessageBox.Show("Update failed to download", "Update unsuccessful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    MessageBox.Show("Update failed to download", "Wagemaster API - Update unsuccessful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                                 }
                             }
@@ -133,7 +133,7 @@ namespace YourProjectName.Models
                 if (VerifyFileChecksum(filePath, expectedChecksum))
                 {
                     // Proceed with the update
-                    DialogResult dialogResult = MessageBox.Show("A new version is available. Do you want to update now?", "Update Available", MessageBoxButtons.YesNo);
+                    DialogResult dialogResult = MessageBox.Show("A new version is available. Do you want to update now?", "Wagemaster API - Update Available", MessageBoxButtons.YesNo);
                     if (dialogResult == DialogResult.Yes)
                     {
                         // Proceed with update
