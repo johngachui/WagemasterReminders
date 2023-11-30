@@ -49,8 +49,15 @@ namespace WagemasterEvents
             try
             {
                 var currentVersion = new Version("1.0.0"); // Current version of the app
-                var updateInfo = await GetUpdateInfoAsync(); // Implement this method to get update info from your server
-
+                UpdateInfo? updateInfo = null;
+                try
+                {
+                    updateInfo = await GetUpdateInfoAsync(); // Implement this method to get update info from your server
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"JSON Error2: {ex.Message}");
+                }
                 if (updateInfo != null)
                 {
                     if (updateInfo.Version > currentVersion)
@@ -83,8 +90,18 @@ namespace WagemasterEvents
             using (var client = new HttpClient())
             {
                 string url = "https://digitalframeworksltd.com/WagemasterEvents/versionReminders.json";
-                var response = await client.GetStringAsync(url);
-                return JsonConvert.DeserializeObject<UpdateInfo>(response);
+
+                try
+                {
+                    var response = await client.GetStringAsync(url);
+                    return JsonConvert.DeserializeObject<UpdateInfo>(response);
+                }
+                catch (Exception ex) 
+                { 
+                    Debug.WriteLine($"JSON Error: {ex.Message}");
+                    return null;
+                }
+                
             }
         }
 
