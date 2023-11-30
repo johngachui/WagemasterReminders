@@ -40,7 +40,7 @@ namespace WagemasterEvents
                 {
                     // Handle exceptions
                     // You can log this exception or show a message to the user
-                    Debug.WriteLine($"task.Exception : {task.Exception}");
+                    Debug.WriteLine($"CheckForUpdatesAsync : {task.Exception}");
                 }
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
@@ -55,6 +55,8 @@ namespace WagemasterEvents
                 {
                     if (updateInfo.Version > currentVersion)
                     {
+                        Debug.WriteLine($"updateInfo.Version : {updateInfo.Version} currentVersion: {currentVersion}");
+
                         var result = System.Windows.MessageBox.Show("Update available. Do you want to update now?", "Update Available", MessageBoxButton.YesNo);
                         if (result == MessageBoxResult.Yes)
                         {
@@ -72,7 +74,7 @@ namespace WagemasterEvents
         public class UpdateInfo
         {
             public Version? Version { get; set; }
-            public string? DownloadUrl { get; set; }
+            public string? Url { get; set; }
             public string? Checksum { get; set; }
         }
 
@@ -91,9 +93,11 @@ namespace WagemasterEvents
             string tempPath = Path.GetTempPath();
             string installerPath = Path.Combine(tempPath, "WagemasterEventsUpdate.exe");
 
+            Debug.WriteLine($"updateInfo : {updateInfo.Url}");
+
             using (var client = new HttpClient())
             {
-                var response = await client.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                var response = await client.GetAsync(updateInfo.Url, HttpCompletionOption.ResponseHeadersRead);
 
                 using (var stream = await response.Content.ReadAsStreamAsync())
                 using (var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -113,6 +117,7 @@ namespace WagemasterEvents
             else
             {
                 // Handle invalid checksum: notify user, log error, etc.
+                System.Windows.MessageBox.Show("Incomplete or corrupted download, try again!", "File Download Failure", MessageBoxButton.OK);
             }
         }
 
