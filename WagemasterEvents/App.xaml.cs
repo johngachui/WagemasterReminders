@@ -64,7 +64,7 @@ namespace WagemasterEvents
                     {
                         Debug.WriteLine($"updateInfo.Version : {updateInfo.Version} currentVersion: {currentVersion}");
 
-                        var result = System.Windows.MessageBox.Show("Update available. Do you want to update now?", "Update Available", MessageBoxButton.YesNo);
+                        var result = System.Windows.MessageBox.Show("Update available. Do you want to update now?", "Wagemaster Reminders - Update Available", MessageBoxButton.YesNo);
                         if (result == MessageBoxResult.Yes)
                         {
                             await UpdateApplication(updateInfo); // Implement this method to download and start the update installer
@@ -134,7 +134,7 @@ namespace WagemasterEvents
             else
             {
                 // Handle invalid checksum: notify user, log error, etc.
-                System.Windows.MessageBox.Show("Incomplete or corrupted download, try again!", "File Download Failure", MessageBoxButton.OK);
+                System.Windows.MessageBox.Show("Incomplete or corrupted download, try again!", "Wagemaster Reminders - File Download Failure", MessageBoxButton.OK);
             }
         }
 
@@ -191,7 +191,7 @@ namespace WagemasterEvents
             if (updateInfo != null && updateInfo.Version > currentVersion) //System.Reflection.Assembly.GetExecutingAssembly().GetName().Version)
             {
                 // New update available
-                var result = System.Windows.MessageBox.Show("An update is available. Would you like to update now?", "Update Available", MessageBoxButton.YesNo);
+                var result = System.Windows.MessageBox.Show("An update is available. Would you like to update now?", "Wagemaster Reminders - Update Available", MessageBoxButton.YesNo);
                 if (result == MessageBoxResult.Yes)
                 {
                     await UpdateApplication(updateInfo);
@@ -199,7 +199,7 @@ namespace WagemasterEvents
             }
             else
             {
-                System.Windows.MessageBox.Show("You are using the latest version.", "No Updates Found");
+                System.Windows.MessageBox.Show("You are using the latest version.", "Wagemaster Reminders - No Updates Found");
             }
         }
         private void ShowMainWindow()
