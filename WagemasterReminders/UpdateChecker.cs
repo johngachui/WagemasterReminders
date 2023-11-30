@@ -10,7 +10,7 @@ namespace YourProjectName.Models
 {
     public class UpdateChecker
     {
-        private const string VersionCheckUrl = "https://digitalframeworksltd.com/WagemasterAPI/version.json";
+        private const string VersionCheckUrl = "https://digitalframeworksltd.com/WagemasterAPI/versionAPI.json";
         private readonly string currentVersion;
 
         public UpdateChecker(string currentVersion)
