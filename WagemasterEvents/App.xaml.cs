@@ -82,7 +82,7 @@ namespace WagemasterEvents
         {
             using (var client = new HttpClient())
             {
-                string url = "https://digitalframeworksltd.com/WagemasterEvents/update.json";
+                string url = "https://digitalframeworksltd.com/WagemasterEvents/versionReminders.json";
                 var response = await client.GetStringAsync(url);
                 return JsonConvert.DeserializeObject<UpdateInfo>(response);
             }
