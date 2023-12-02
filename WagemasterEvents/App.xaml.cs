@@ -89,7 +89,7 @@ namespace WagemasterEvents
         {
             using (var client = new HttpClient())
             {
-                string url = "https://digitalframeworksltd.com/WagemasterReminders/versionReminders.json";
+                string url = "https://digitalframeworksltd.com/WagemasterRem/versionReminders.json";
 
                 try
                 {
@@ -108,23 +108,27 @@ namespace WagemasterEvents
         private async Task UpdateApplication(UpdateInfo updateInfo)
         {
             string tempPath = Path.GetTempPath();
-            string installerPath = Path.Combine(tempPath, "WagemasterEventsUpdate.exe");
+            string installerPath = Path.Combine(tempPath, "Rem_Update.exe");
             string? downloadURL = updateInfo.Url;
 
             Debug.WriteLine($"updateInfo : {downloadURL}");
 
             using (var client = new HttpClient())
             {
-                var response = await client.GetAsync(downloadURL, HttpCompletionOption.ResponseHeadersRead);
-                if (!response.IsSuccessStatusCode)
+                using var response = await client.GetAsync(downloadURL, HttpCompletionOption.ResponseHeadersRead);
                 {
-                    Debug.WriteLine($"Error downloading the update.: {downloadURL}");
-                    throw new Exception("Error downloading the update.");
-                }
-                using (var stream = await response.Content.ReadAsStreamAsync())
-                using (var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    await stream.CopyToAsync(fileStream);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"Error downloading the update.: {downloadURL}");
+                        throw new Exception("Error downloading the update.");
+                    }
+                    //using (var stream = await response.Content.ReadAsStreamAsync())
+                    using (var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        //await stream.CopyToAsync(fileStream);
+                        await response.Content.CopyToAsync(fileStream);
+                        await fileStream.FlushAsync();
+                    }
                 }
             }
 
@@ -143,25 +147,6 @@ namespace WagemasterEvents
             }
         }
 
-        /*private bool VerifyChecksum(string filePath, string? expectedChecksum)
-        {
-            if (expectedChecksum != null)
-            {
-                using (var sha256 = System.Security.Cryptography.SHA256.Create())
-                {
-                    using (var stream = File.OpenRead(filePath))
-                    {
-                        var hash = sha256.ComputeHash(stream);
-                        string fileChecksum = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                        return fileChecksum == expectedChecksum.ToLowerInvariant();
-                    }
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }*/
         private static bool VerifyChecksum(string filePath, string? expectedChecksum)
         {
             using (var sha256 = SHA256.Create())
@@ -170,6 +155,8 @@ namespace WagemasterEvents
                 {
                     var fileChecksum = sha256.ComputeHash(stream);
                     var fileChecksumString = BitConverter.ToString(fileChecksum).Replace("-", String.Empty);
+                    Debug.WriteLine($"expectedChecksum--: {expectedChecksum}");
+                    Debug.WriteLine($"fileChecksumString: {fileChecksumString}");
                     return fileChecksumString.Equals(expectedChecksum, StringComparison.OrdinalIgnoreCase);
                 }
             }
