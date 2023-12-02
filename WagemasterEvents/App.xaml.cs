@@ -89,7 +89,7 @@ namespace WagemasterEvents
         {
             using (var client = new HttpClient())
             {
-                string url = "https://digitalframeworksltd.com/WagemasterEvents/versionReminders.json";
+                string url = "https://digitalframeworksltd.com/WagemasterReminders/versionReminders.json";
 
                 try
                 {
@@ -109,13 +109,18 @@ namespace WagemasterEvents
         {
             string tempPath = Path.GetTempPath();
             string installerPath = Path.Combine(tempPath, "WagemasterEventsUpdate.exe");
+            string? downloadURL = updateInfo.Url;
 
-            Debug.WriteLine($"updateInfo : {updateInfo.Url}");
+            Debug.WriteLine($"updateInfo : {downloadURL}");
 
             using (var client = new HttpClient())
             {
-                var response = await client.GetAsync(updateInfo.Url, HttpCompletionOption.ResponseHeadersRead);
-
+                var response = await client.GetAsync(downloadURL, HttpCompletionOption.ResponseHeadersRead);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"Error downloading the update.: {downloadURL}");
+                    throw new Exception("Error downloading the update.");
+                }
                 using (var stream = await response.Content.ReadAsStreamAsync())
                 using (var fileStream = new FileStream(installerPath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
@@ -138,7 +143,7 @@ namespace WagemasterEvents
             }
         }
 
-        private bool VerifyChecksum(string filePath, string? expectedChecksum)
+        /*private bool VerifyChecksum(string filePath, string? expectedChecksum)
         {
             if (expectedChecksum != null)
             {
@@ -156,7 +161,20 @@ namespace WagemasterEvents
             {
                 return false;
             }
+        }*/
+        private static bool VerifyChecksum(string filePath, string? expectedChecksum)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                using (var stream = File.OpenRead(filePath))
+                {
+                    var fileChecksum = sha256.ComputeHash(stream);
+                    var fileChecksumString = BitConverter.ToString(fileChecksum).Replace("-", String.Empty);
+                    return fileChecksumString.Equals(expectedChecksum, StringComparison.OrdinalIgnoreCase);
+                }
+            }
         }
+        
         private async void LoadEventsFromApi()
         {
             try
