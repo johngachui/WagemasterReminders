@@ -4,5 +4,6 @@
     public string? EmpName { get; set; }
     public string? Email { get; set; }
     public bool Employed { get; set; }
-    public string? DatabasePath { get; set; }
+    public string? CompanyKey { get; set; }
+    public string? DivisionKey { get; set; }
 }

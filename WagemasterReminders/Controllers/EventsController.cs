@@ -52,7 +52,7 @@ namespace YourProjectName.Controllers
         public ActionResult<IEnumerable<LeaveBals>> GetLeaveBals([FromBody] LeaveEmployee leaveEmployee)
         {
             // Here, GetLeaveBals reads multiple database paths from INI file and checks each of them for the user.
-            var leavebals = _databaseService.GetLeaveBals(leaveEmployee.Num,leaveEmployee.CompanyPath);
+            var leavebals = _databaseService.GetLeaveBals(leaveEmployee.Num,leaveEmployee.CompanyKey,leaveEmployee.DivisionKey);
             if (leavebals == null || leavebals.Count == 0)
             {
                 return Unauthorized();
@@ -66,7 +66,7 @@ namespace YourProjectName.Controllers
         public ActionResult<IEnumerable<LeaveDays>> GetLeaveDays([FromBody] LeaveEmployee leaveEmployee)
         {
             // Here, GetLeaveBals reads multiple database paths from INI file and checks each of them for the user.
-            var leavedays = _databaseService.GetLeaveDays(leaveEmployee.Num, leaveEmployee.CompanyPath);
+            var leavedays = _databaseService.GetLeaveDays(leaveEmployee.Num, leaveEmployee.CompanyKey, leaveEmployee.DivisionKey);
             if (leavedays == null || leavedays.Count == 0)
             {
                 return Unauthorized();
@@ -80,7 +80,7 @@ namespace YourProjectName.Controllers
         public ActionResult CreateLeaveApplication([FromBody] LeaveApplications leaveappl)
         {
             
-            if (!_databaseService.CreateLeaveApplication(leaveappl.Num, leaveappl.StartDate, leaveappl.StopDate, leaveappl.LeaveType, leaveappl.DatabasePath))
+            if (!_databaseService.CreateLeaveApplication(leaveappl.Num, leaveappl.StartDate, leaveappl.StopDate, leaveappl.LeaveType, leaveappl.CompanyKey, leaveappl.DivisionKey))
                 return NotFound();
 
             return Ok();
@@ -91,7 +91,7 @@ namespace YourProjectName.Controllers
         public ActionResult<IEnumerable<HR_Master>> GetHRMaster([FromBody] HREmployee employee)
         {
             // Here, GetLeaveBals reads multiple database paths from INI file and checks each of them for the user.
-            var hrmasteremps = _databaseService.GetHRMaster(employee.Num,employee.CompanyPath);
+            var hrmasteremps = _databaseService.GetHRMaster(employee.Num,employee.CompanyKey,employee.DivisionKey);
             if (hrmasteremps == null || hrmasteremps.Count == 0)
             {
                 return Unauthorized();

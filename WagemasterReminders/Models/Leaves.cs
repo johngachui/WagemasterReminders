@@ -17,7 +17,8 @@
         public decimal Sold { get; set; }
         public decimal Adjustment { get; set; }
         public decimal Absence { get; set; }
-        public string? DatabasePath { get; set; }
+        public string? CompanyKey { get; set; }
+        public string? DivisionKey { get; set; }
 
     }
 

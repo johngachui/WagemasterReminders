@@ -10,6 +10,7 @@ using YourProjectName.Models;
 
 namespace YourProjectName.Services
 {
+
     public interface IDatabaseService
     {
         List<string> ReadIniFile();
@@ -18,12 +19,13 @@ namespace YourProjectName.Services
 
         bool UpdateEvent(int id, bool dismissed, string username, string databasePath, string password, int? ref_id, string reminderType);
 
-        List<LeaveBals> GetLeaveBals(string num,string companypath);
+        List<LeaveBals> GetLeaveBals(string num, string companykey, string divisionkey);
         bool AuthEmp(string num, string databasePath, string called_from);
-        List<LeaveDays> GetLeaveDays(string num, string companypath);
+        List<LeaveDays> GetLeaveDays(string num, string companykey, string divisionkey);
 
-        List<HR_Master> GetHRMaster(string num, string companypath);
-        bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string databasePath);
+        List<HR_Master> GetHRMaster(string num,  string companykey, string divisionkey);
+        bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string companykey, string divisionkey);
+        
     }
 
     public interface ITaskService
@@ -39,10 +41,15 @@ namespace YourProjectName.Services
     {
         private readonly ILogger<DatabaseService> _logger;
 
+        // Define the dictionary to map (CompanyKey, DivisionKey) to a list of database paths
+        
+        private Dictionary<(string CompanyKey, string DivisionKey), string> _companyDivisionDatabaseMappings;
+
         public DatabaseService(ILogger<DatabaseService> logger)
         {
             _logger = logger;
-
+            LoadCompanyDivisionMappings(); // load mappings when the service is instantiated
+           
         }
 
         public bool GetUser(string username, string password, string databasePath)
@@ -105,12 +112,12 @@ namespace YourProjectName.Services
                     connection.Open();
 
                     // Check if the leave API function is licensed
-                    string countQuery = "SELECT COMPANY_FILES.ELM_API_KEY FROM COMPANY_FILES WHERE (((COMPANY_FILES.LAST)=True) AND ((COMPANY_FILES.ELM_API_KEY)>''));";
+                    string countQuery = "SELECT COMPANY_FILES.API_COMPANYKEY FROM COMPANY_FILES WHERE (((COMPANY_FILES.LAST)=True) AND ((COMPANY_FILES.API_COMPANYKEY)>''));";
                     using (OleDbCommand countCommand = new OleDbCommand(countQuery, connection))
                     {
-                        string elm_api_key = (string)countCommand.ExecuteScalar();
-                        _logger.LogInformation($"rowCountELM = {elm_api_key}"); //SHOW ROWCOUNT                                        
-                        if (!string.IsNullOrEmpty(elm_api_key))
+                        string? api_companykey = (string?)countCommand.ExecuteScalar();
+                        _logger.LogInformation($"rowCountELM = {api_companykey}"); //SHOW ROWCOUNT                                        
+                        if (!string.IsNullOrEmpty(api_companykey))
                         {
                             _logger.LogInformation($"return_elm1 = true"); //SHOW ROWCOUNT 
                             return true;  // Return true if the PASSWORDS table is empty
@@ -238,68 +245,52 @@ namespace YourProjectName.Services
             return events;
         }
 
-        public List<LeaveBals> GetLeaveBals(string num,string companypath)
+        public List<LeaveBals> GetLeaveBals(string num, string companykey, string divisionkey)
         {
             // Read the INI file to get the database paths
-            List<string> databasePaths = ReadIniFile();
+            //List<string> databasePaths = ReadIniFile();
+            string path = ResolveDatabasePath(companykey, divisionkey);
             List<LeaveBals> leavebals = new List<LeaveBals>();
 
-            // Loop through each database path and fetch event data
-            foreach (string path in databasePaths)
+            
+            if (AuthEmp(num, path,"leavebals"))
             {
-                if (path == companypath)
-                {
-                    if (AuthEmp(num, path,"leavebals"))
-                    {
-                        _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
-                        leavebals.AddRange(GetLeaveBalsFromDatabase(path, num));
-                        _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
-                    }
-                }
+                _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
+                leavebals.AddRange(GetLeaveBalsFromDatabase(path, num, companykey, divisionkey));
+                _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
             }
+            
             return leavebals;
         }
 
-        public List<HR_Master> GetHRMaster(string num, string companypath)
+        public List<HR_Master> GetHRMaster(string num, string companykey, string divisionkey)
         {
             // Read the INI file to get the database paths
-            List<string> databasePaths = ReadIniFile();
+            string path = ResolveDatabasePath(companykey, divisionkey);
             List<HR_Master> hrmasteremps = new List<HR_Master>();
 
-            // Loop through each database path and fetch event data
-            foreach (string path in databasePaths)
+            if (AuthEmp(num, path, "hrmaster"))
             {
-                if (path == companypath)
-                {
-                    if (AuthEmp(num, path, "hrmaster"))
-                    {
-                        _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT
-                        hrmasteremps.AddRange(GetHRMasterFromDatabase(num, companypath));
-                        _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT 
-                    }
-                }
+                _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT
+                hrmasteremps.AddRange(GetHRMasterFromDatabase(num, path, companykey, divisionkey));
+                _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT 
             }
+            
             return hrmasteremps;
         }
-        public List<LeaveDays> GetLeaveDays(string num, string companypath)
+        public List<LeaveDays> GetLeaveDays(string num, string companykey, string divisionkey)
         {
             // Read the INI file to get the database paths
-            List<string> databasePaths = ReadIniFile();
+            string path = ResolveDatabasePath(companykey, divisionkey);
             List<LeaveDays> leavedays = new List<LeaveDays>();
-
-            // Loop through each database path and fetch event data
-            foreach (string path in databasePaths)
+            
+            if (AuthEmp(num, path,"leavedays"))
             {
-                if (path == companypath)
-                {
-                    if (AuthEmp(num, path,"leavedays"))
-                    {
-                        _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
-                        leavedays.AddRange(GetLeaveDaysFromDatabase(path, num));
-                        _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
-                    }
-                }
+                _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
+                leavedays.AddRange(GetLeaveDaysFromDatabase(path, num));
+                _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
             }
+            
             return leavedays;
         }
         public List<string> ReadIniFile()
@@ -335,6 +326,64 @@ namespace YourProjectName.Services
         {
             return $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={databasePath};Jet OLEDB:Database Password=!wage*master?;";
         }
+
+        public void LoadCompanyDivisionMappings()
+        {
+            
+            // Read database paths from the INI file
+            var databasePaths = ReadIniFile();
+
+            foreach (var databasePath in databasePaths)
+            {
+                // Connect to the database
+                string connectionString = GetConnectionString(databasePath);
+                using (var connection = new OleDbConnection(connectionString))
+                {
+                    try
+                    {
+                        connection.Open();
+                        // Query the COMPANY_FILES table for API_COMPANYKEY and API_DIVISIONKEY
+                        var command = new OleDbCommand("SELECT TOP 1 API_COMPANYKEY, API_DIVISIONKEY FROM COMPANY_FILES WHERE API_COMPANYKEY IS NOT NULL AND API_DIVISIONKEY IS NOT NULL", connection);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                var companyKey = reader["API_COMPANYKEY"].ToString();
+                                var divisionKey = reader["API_DIVISIONKEY"].ToString();
+
+                                // Add to the dictionary
+                                if (!string.IsNullOrEmpty(companyKey) && !string.IsNullOrEmpty(divisionKey))
+                                {
+                                    _companyDivisionDatabaseMappings.Add((companyKey, divisionKey), databasePath);
+
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle any exceptions, such as logging errors or skipping to the next database path
+                        Console.WriteLine($"Error loading mappings for database at path {databasePath}: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+
+        public string ResolveDatabasePath(string companyKey, string divisionKey)
+        {
+            if (_companyDivisionDatabaseMappings.TryGetValue((companyKey, divisionKey), out var databasePath))
+            {
+                return databasePath;
+            }
+            else
+            {
+                throw new KeyNotFoundException($"No database path found for company key {companyKey} and division key {divisionKey}.");
+            }
+        }
+
+
+
 
         private List<Event> GetEventsFromDatabase(string databasePath, string username)
         {
@@ -396,7 +445,7 @@ namespace YourProjectName.Services
             return events;
         }
 
-        private List<LeaveBals> GetLeaveBalsFromDatabase(string databasePath, string num)
+        private List<LeaveBals> GetLeaveBalsFromDatabase(string databasePath, string num, string companykey, string divisionkey)
         {
             List<LeaveBals> leavebals = new List<LeaveBals>();
             try
@@ -484,8 +533,8 @@ namespace YourProjectName.Services
                                         Sold = (decimal)reader["SOLD"],
                                         Adjustment = (decimal)reader["LEAVE_ADJUST"],
                                         Absence = (decimal)reader["LEAVE_ABSENCE"],
-                                        DatabasePath = databasePath,
-
+                                        CompanyKey = companykey,
+                                        DivisionKey = divisionkey,
                                     };
                                     leavebals.Add(e);
                                 }
@@ -636,12 +685,14 @@ namespace YourProjectName.Services
             return leavedays;
         }
 
-        public bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string databasePath)
+        public bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string companykey, string divisionkey)
         {
+
+            string path = ResolveDatabasePath(companykey, divisionkey);
             // Check if the user has permission to perform this operation
-            if (!AuthEmp(num, databasePath,"leaveapplications"))
+            if (!AuthEmp(num, path,"leaveapplications"))
             {
-                _logger.LogInformation($"User {num} attempted to update event in database {databasePath}, but does not have necessary permissions");
+                _logger.LogInformation($"User {num} attempted to update event in database {path}, but does not have necessary permissions");
                 return false;
             }
 
@@ -650,7 +701,7 @@ namespace YourProjectName.Services
             int yearx = startdate.Year;
 
             // Proceed with the update operation if permission granted...
-            string connectionString = GetConnectionString(databasePath);
+            string connectionString = GetConnectionString(path);
             using (OleDbConnection connection = new OleDbConnection(connectionString))
             {
                 bool recalc_needed = true;
@@ -676,7 +727,7 @@ namespace YourProjectName.Services
 
                         if (rowsAffected == 0)
                         {
-                            _logger.LogInformation($"No leave applications were made in database {databasePath}");
+                            _logger.LogInformation($"No leave applications were made in database {path}");
                             return false;
                         }
                         
@@ -685,14 +736,14 @@ namespace YourProjectName.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogInformation($"Error in insert application query in database {databasePath}. Error: {ex.Message}");
+                    _logger.LogInformation($"Error in insert application query in database {path}. Error: {ex.Message}");
                     return false;
                 }
 
             }
         }
 
-        private List<HR_Master> GetHRMasterFromDatabase(string num, string databasePath)
+        private List<HR_Master> GetHRMasterFromDatabase(string num, string databasePath, string companykey, string divisionkey)
         {
             List<HR_Master> hrmasteremps = new List<HR_Master>();
             try
@@ -770,7 +821,8 @@ namespace YourProjectName.Services
                                         EmpName = reader["NAME"].ToString(),
                                         Email = reader["EMAIL"].ToString(),
                                         Employed = (bool)reader["EMPLOYED"],
-                                        DatabasePath = databasePath,
+                                        CompanyKey=companykey,
+                                        DivisionKey=divisionkey,
 
                                     };
                                     hrmasteremps.Add(e);
@@ -792,6 +844,9 @@ namespace YourProjectName.Services
             }
             return hrmasteremps;
         }
+
+        
+        
     }
 }
 
