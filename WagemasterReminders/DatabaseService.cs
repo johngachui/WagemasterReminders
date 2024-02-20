@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿//DatabaseService.cs
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.Collections.Generic;
@@ -19,12 +20,12 @@ namespace YourProjectName.Services
 
         bool UpdateEvent(int id, bool dismissed, string username, string databasePath, string password, int? ref_id, string reminderType);
 
-        List<LeaveBals> GetLeaveBals(string num, string companykey, string divisionkey);
+        List<LeaveBals> GetLeaveBals(string num, string companykey, string divisionkey, string employeekey);
         bool AuthEmp(string num, string databasePath, string called_from);
-        List<LeaveDays> GetLeaveDays(string num, string companykey, string divisionkey);
+        List<LeaveDays> GetLeaveDays(string num, string companykey, string divisionkey, string employeekey);
 
-        List<HR_Master> GetHRMaster(string num,  string companykey, string divisionkey);
-        bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string companykey, string divisionkey);
+        List<HR_Master> GetHRMaster(string num,  string companykey, string divisionkey, string employeekey);
+        bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string companykey, string divisionkey, string employeekey);
         
     }
 
@@ -42,15 +43,27 @@ namespace YourProjectName.Services
         private readonly ILogger<DatabaseService> _logger;
 
         // Define the dictionary to map (CompanyKey, DivisionKey) to a list of database paths
-        
-        private Dictionary<(string CompanyKey, string DivisionKey), string> _companyDivisionDatabaseMappings;
 
-        public DatabaseService(ILogger<DatabaseService> logger)
+        private Dictionary<(string CompanyKey, string DivisionKey), string> _companyDivisionDatabaseMappings = new Dictionary<(string CompanyKey, string DivisionKey), string>();
+
+        private readonly ILoggerFactory _loggerFactory;
+
+        public DatabaseService(ILogger<DatabaseService> logger, ILoggerFactory loggerFactory)
         {
             _logger = logger;
-            LoadCompanyDivisionMappings(); // load mappings when the service is instantiated
-           
+            _loggerFactory = loggerFactory;
+            InitializeDatabaseService();
         }
+
+        private void InitializeDatabaseService()
+        {
+            var databasePaths = ReadIniFile();
+            var conflictResolverLogger = _loggerFactory.CreateLogger<DatabaseConflictResolver>();
+            var resolver = new DatabaseConflictResolver(conflictResolverLogger, DatabaseService.GetConnectionString);
+            resolver.ResolveAllConflicts(databasePaths);
+            LoadCompanyDivisionMappings();
+        }
+
 
         public bool GetUser(string username, string password, string databasePath)
 
@@ -245,7 +258,7 @@ namespace YourProjectName.Services
             return events;
         }
 
-        public List<LeaveBals> GetLeaveBals(string num, string companykey, string divisionkey)
+        public List<LeaveBals> GetLeaveBals(string num, string companykey, string divisionkey, string employeekey)
         {
             // Read the INI file to get the database paths
             //List<string> databasePaths = ReadIniFile();
@@ -256,14 +269,14 @@ namespace YourProjectName.Services
             if (AuthEmp(num, path,"leavebals"))
             {
                 _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
-                leavebals.AddRange(GetLeaveBalsFromDatabase(path, num, companykey, divisionkey));
+                leavebals.AddRange(GetLeaveBalsFromDatabase(path, num, companykey, divisionkey, employeekey));
                 _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
             }
             
             return leavebals;
         }
 
-        public List<HR_Master> GetHRMaster(string num, string companykey, string divisionkey)
+        public List<HR_Master> GetHRMaster(string num, string companykey, string divisionkey, string employeekey)
         {
             // Read the INI file to get the database paths
             string path = ResolveDatabasePath(companykey, divisionkey);
@@ -272,13 +285,13 @@ namespace YourProjectName.Services
             if (AuthEmp(num, path, "hrmaster"))
             {
                 _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT
-                hrmasteremps.AddRange(GetHRMasterFromDatabase(num, path, companykey, divisionkey));
+                hrmasteremps.AddRange(GetHRMasterFromDatabase(num, path, companykey, divisionkey, employeekey));
                 _logger.LogInformation($"path4 = *******************"); //SHOW ROWCOUNT 
             }
             
             return hrmasteremps;
         }
-        public List<LeaveDays> GetLeaveDays(string num, string companykey, string divisionkey)
+        public List<LeaveDays> GetLeaveDays(string num, string companykey, string divisionkey, string employeekey)
         {
             // Read the INI file to get the database paths
             string path = ResolveDatabasePath(companykey, divisionkey);
@@ -287,7 +300,7 @@ namespace YourProjectName.Services
             if (AuthEmp(num, path,"leavedays"))
             {
                 _logger.LogInformation($"path1 = *******************"); //SHOW ROWCOUNT
-                leavedays.AddRange(GetLeaveDaysFromDatabase(path, num));
+                leavedays.AddRange(GetLeaveDaysFromDatabase(path, num, employeekey));
                 _logger.LogInformation($"path2 = *******************"); //SHOW ROWCOUNT 
             }
             
@@ -322,7 +335,7 @@ namespace YourProjectName.Services
             return databasePaths;
         }
 
-        private static string GetConnectionString(string databasePath)
+        public static string GetConnectionString(string databasePath)
         {
             return $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={databasePath};Jet OLEDB:Database Password=!wage*master?;";
         }
@@ -445,7 +458,7 @@ namespace YourProjectName.Services
             return events;
         }
 
-        private List<LeaveBals> GetLeaveBalsFromDatabase(string databasePath, string num, string companykey, string divisionkey)
+        private List<LeaveBals> GetLeaveBalsFromDatabase(string databasePath, string num, string companykey, string divisionkey, string employeekey)
         {
             List<LeaveBals> leavebals = new List<LeaveBals>();
             try
@@ -457,54 +470,31 @@ namespace YourProjectName.Services
                     connection.Open();
                     string query = "";
                     int query_type = 0;
-                    string num_start = "";
-                    string num_stop = "";
-                    if (num.StartsWith ("*"))
+                    
+                    if (employeekey.StartsWith ("*"))
                     {
                         if (num.Length == 1)
                         {
-                            query = "SELECT MASTER.NUM, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True;";
+                            query = "SELECT MASTER.NUM, HR_MASTER.API_EMPLOYEEKEY, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE, MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) INNER JOIN HR_MASTER ON HR_MASTER.NUM = MASTER.NUM WHERE COMPANY_FILES.LAST=True;";
                             query_type = 1;
                         }
-                        else
-                        {
-                            int startIndex = num.IndexOf('*');
-                            int midIndex = num.IndexOf('~');
-                            if (startIndex != -1 && midIndex != -1 && startIndex < midIndex)
-                            {
-                                
-                                num_start = num.Substring(startIndex + 1, midIndex - startIndex - 1);
-                                _logger.LogInformation($"num_start = {num_start}");
-
-                                int stopIndex = num.IndexOf('~');
-                                if (stopIndex != -1)
-                                {
-                                    num_stop = num.Substring(stopIndex + 1);
-                                    query = "SELECT MASTER.NUM, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE COMPANY_FILES.LAST=True AND (MASTER.NUM >= ? AND MASTER.NUM <= ?) ORDER BY MASTER.NUM;";
-                                    query_type = 2;
-                                }
-                            }
-                        }
-                    }
+                                            }
                     else
                     {
-                        query = "SELECT MASTER.NUM, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE,MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD FROM COMPANY_FILES INNER JOIN MASTER ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (COMPANY_FILES.YEARX = MASTER.YEARZ) WHERE (((COMPANY_FILES.LAST)=True) AND ((MASTER.NUM) LIKE ?));";
-                        query_type = 3;
+                        query = "SELECT MASTER.NUM, MASTER.LEAVE_BFWD, MASTER.LEAVE_CFWD, MASTER.THIS_MONTH, MASTER.TAKEN, MASTER.SOLD, MASTER.LEAVE_ABSENCE, MASTER.LEAVE_ADJUST, MASTER.MATERNITY_BFWD, MASTER.MATERNITY_CFWD, MASTER.PATERNITY_BFWD, MASTER.PATERNITY_CFWD, MASTER.FULL_DAYS_CFWD, MASTER.HALF_DAYS_CFWD, COMPANY_FILES.LAST, HR_MASTER.API_EMPLOYEEKEY FROM (HR_MASTER INNER JOIN MASTER ON HR_MASTER.NUM = MASTER.NUM) INNER JOIN COMPANY_FILES ON (COMPANY_FILES.MONTHX = MASTER.MONTHZ) AND (MASTER.YEARZ = COMPANY_FILES.YEARX) WHERE (((COMPANY_FILES.LAST)=True) AND ((HR_MASTER.API_EMPLOYEEKEY)=?))";
+
+                        query_type = 2;
                     }
                     
                     if (query_type == 0) { return leavebals; } //incorrect parameter
 
                     using (OleDbCommand command = new OleDbCommand(query, connection))
                     {
-                        _logger.LogInformation($"Y1 username = {num}");
+                        _logger.LogInformation($"Y1A employeekey = {employeekey} and query_type = {query_type}");
                         switch (query_type)
                         {
                             case 2:
-                                command.Parameters.AddWithValue("?", num_start);
-                                command.Parameters.AddWithValue("?", num_stop);
-                                break;
-                            case 3:
-                                command.Parameters.AddWithValue("?", num);
+                                command.Parameters.AddWithValue("?", employeekey);
                                 break;
                             default:
                                 break;
@@ -535,6 +525,7 @@ namespace YourProjectName.Services
                                         Absence = (decimal)reader["LEAVE_ABSENCE"],
                                         CompanyKey = companykey,
                                         DivisionKey = divisionkey,
+                                        EmployeeKey = reader["API_EMPLOYEEKEY"].ToString(),
                                     };
                                     leavebals.Add(e);
                                 }
@@ -551,12 +542,12 @@ namespace YourProjectName.Services
             catch (Exception ex)
             {
                 // Log the error
-                _logger.LogInformation($"Log3b: {ex.Message}");
+                _logger.LogInformation($"Log3C: {ex.Message}");
             }
             return leavebals;
         }
 
-        private List<LeaveDays> GetLeaveDaysFromDatabase(string databasePath, string num)
+        private List<LeaveDays> GetLeaveDaysFromDatabase(string databasePath, string num,string employeekey)
         {
             List<LeaveDays> leavedays = new List<LeaveDays>();
             try
@@ -568,39 +559,19 @@ namespace YourProjectName.Services
                     connection.Open();
                     string query = "";
                     int query_type = 0;
-                    string num_start = "";
-                    string num_stop = "";
+                    
                     if (num.StartsWith("*"))
                     {
                         if (num.Length == 1)
                         {
-                            query = "SELECT [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
+                            query = "SELECT [LEAVE DAYS TAKEN].NUM, HR_MASTER.API_EMPLOYEEKEY, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] INNER JOIN HR_MASTER ON HR_MASTER.NUM = [LEAVE DAYS TAKEN].NUM ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
                             query_type = 1;
-                        }
-                        else
-                        {
-                            int startIndex = num.IndexOf('*');
-                            int midIndex = num.IndexOf('~');
-                            if (startIndex != -1 && midIndex != -1 && startIndex < midIndex)
-                            {
-
-                                num_start = num.Substring(startIndex + 1, midIndex - startIndex - 1);
-                                _logger.LogInformation($"num_start = {num_start}");
-
-                                int stopIndex = num.IndexOf('~');
-                                if (stopIndex != -1)
-                                {
-                                    num_stop = num.Substring(stopIndex + 1);
-                                    query = "SELECT [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] WHERE ((([LEAVE DAYS TAKEN].NUM)>=[?] And ([LEAVE DAYS TAKEN].NUM)<=[?])) ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
-                                    query_type = 2;
-                                }
-                            }
                         }
                     }
                     else
                     {
-                        query = "SELECT [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] WHERE ((([LEAVE DAYS TAKEN].NUM) Like [?])) ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
-                        query_type = 3;
+                        query = "SELECT [LEAVE DAYS TAKEN].NUM, HR_MASTER.API_EMPLOYEEKEY, [LEAVE DAYS TAKEN].START, [LEAVE DAYS TAKEN].STOP, [LEAVE DAYS TAKEN].[TYPE], [LEAVE DAYS TAKEN].DAYS, [LEAVE DAYS TAKEN].APPROVED, [LEAVE DAYS TAKEN].NOT_APPROVED, [LEAVE DAYS TAKEN].NOTIFIED, [LEAVE DAYS TAKEN].TAKEN, [LEAVE DAYS TAKEN].RECALC_NEEDED FROM [LEAVE DAYS TAKEN] INNER JOIN HR_MASTER ON HR_MASTER.NUM = [LEAVE DAYS TAKEN].NUM WHERE HR_MASTER.API_EMPLOYEEKEY LIKE [?] ORDER BY [LEAVE DAYS TAKEN].NUM, [LEAVE DAYS TAKEN].START;";
+                        query_type = 2;
                     }
 
                     if (query_type == 0) { return leavedays; } //incorrect parameter
@@ -611,11 +582,7 @@ namespace YourProjectName.Services
                         switch (query_type)
                         {
                             case 2:
-                                command.Parameters.AddWithValue("?", num_start);
-                                command.Parameters.AddWithValue("?", num_stop);
-                                break;
-                            case 3:
-                                command.Parameters.AddWithValue("?", num);
+                                command.Parameters.AddWithValue("?", employeekey);
                                 break;
                             default:
                                 break;
@@ -664,6 +631,7 @@ namespace YourProjectName.Services
                                         Taken = (bool)reader["TAKEN"],
                                         RecalcNeeded = (bool)reader["RECALC_NEEDED"],
                                         DatabasePath = databasePath,
+                                        EmployeeKey = reader["API_EMPLOYEEKEY"].ToString(),
                                     };
                                     leavedays.Add(e);
                                 }
@@ -685,7 +653,7 @@ namespace YourProjectName.Services
             return leavedays;
         }
 
-        public bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string companykey, string divisionkey)
+        public bool CreateLeaveApplication(string num, DateTime startdate, DateTime stopdate, string? leavetype, string companykey, string divisionkey, string employeekey)
         {
 
             string path = ResolveDatabasePath(companykey, divisionkey);
@@ -743,7 +711,7 @@ namespace YourProjectName.Services
             }
         }
 
-        private List<HR_Master> GetHRMasterFromDatabase(string num, string databasePath, string companykey, string divisionkey)
+        private List<HR_Master> GetHRMasterFromDatabase(string num, string databasePath, string companykey, string divisionkey,string employeekey)
         {
             List<HR_Master> hrmasteremps = new List<HR_Master>();
             try
@@ -755,39 +723,20 @@ namespace YourProjectName.Services
                     connection.Open();
                     string query = "";
                     int query_type = 0;
-                    string num_start = "";
-                    string num_stop = "";
-                    if (num.StartsWith("*"))
+                    
+                    if (employeekey.StartsWith("*"))
                     {
-                        if (num.Length == 1)
+                        if (employeekey.Length == 1)
                         {
-                            query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED FROM HR_MASTER ORDER BY HR_MASTER.NUM;";
+                            query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED, HR_MASTER.API_EMPLOYEEKEY FROM HR_MASTER ORDER BY HR_MASTER.NUM;";
                             query_type = 1;
                         }
-                        else
-                        {
-                            int startIndex = num.IndexOf('*');
-                            int midIndex = num.IndexOf('~');
-                            if (startIndex != -1 && midIndex != -1 && startIndex < midIndex)
-                            {
-
-                                num_start = num.Substring(startIndex + 1, midIndex - startIndex - 1);
-                                _logger.LogInformation($"num_start = {num_start}");
-
-                                int stopIndex = num.IndexOf('~');
-                                if (stopIndex != -1)
-                                {
-                                    num_stop = num.Substring(stopIndex + 1);
-                                    query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED FROM HR_MASTER WHERE (HR_MASTER.NUM >= ? AND HR_MASTER.NUM <= ?) ORDER BY HR_MASTER.NUM;";
-                                    query_type = 2;
-                                }
-                            }
-                        }
+                        
                     }
                     else
                     {
-                        query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED FROM HR_MASTER WHERE HR_MASTER.NUM LIKE ?;";
-                        query_type = 3;
+                        query = "SELECT HR_MASTER.NUM, HR_MASTER.[NAME],HR_MASTER.EMAIL, HR_MASTER.EMPLOYED, HR_MASTER.API_EMPLOYEEKEY FROM HR_MASTER WHERE HR_MASTER.API_EMPLOYEEKEY LIKE ?;";
+                        query_type = 2;
                     }
 
                     if (query_type == 0) { return hrmasteremps; } //incorrect parameter
@@ -798,11 +747,7 @@ namespace YourProjectName.Services
                         switch (query_type)
                         {
                             case 2:
-                                command.Parameters.AddWithValue("?", num_start);
-                                command.Parameters.AddWithValue("?", num_stop);
-                                break;
-                            case 3:
-                                command.Parameters.AddWithValue("?", num);
+                                command.Parameters.AddWithValue("?", employeekey);
                                 break;
                             default:
                                 break;
@@ -823,6 +768,7 @@ namespace YourProjectName.Services
                                         Employed = (bool)reader["EMPLOYED"],
                                         CompanyKey=companykey,
                                         DivisionKey=divisionkey,
+                                        EmployeeKey = reader["API_EMPLOYEEKEY"].ToString(),
 
                                     };
                                     hrmasteremps.Add(e);

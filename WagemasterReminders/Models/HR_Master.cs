@@ -6,4 +6,5 @@
     public bool Employed { get; set; }
     public string? CompanyKey { get; set; }
     public string? DivisionKey { get; set; }
+    public string? EmployeeKey { get; set; }
 }

@@ -19,6 +19,7 @@
         public decimal Absence { get; set; }
         public string? CompanyKey { get; set; }
         public string? DivisionKey { get; set; }
+        public string? EmployeeKey { get; set; }
 
     }
 
@@ -35,6 +36,8 @@
         public bool Taken { get; set; }
         public bool RecalcNeeded { get; set; }
         public string? DatabasePath { get; set; }
+
+        public string? EmployeeKey { get; set; }
 
     }
 
